@@ -7,27 +7,22 @@ include "scriptsEnvVarNames.nimInc"
 
 
 const
-    gcWindowsStr           = "windows"
+  gcWindowsStr       = "windows"
 
-    nimFileExt             = "nim"
+  nimFileExt         = "nim"
 
-    testDirName            = "tests"
+  buildDirName       = "builds"
+  cacheDirName       = "caches"
+  targetDirName      = "targets"
+  testDirName        = "tests"
+  
+  testDir            = testDirName
 
-    buildDirName           = "builds"
-    cacheDirName           = "caches"
-    targetDirName          = "targets"
-    scriptDirName          = "scripts"
-
-    testDir              = testDirName
-
-    buildDir             = buildDirName
-    buildCacheDir        = buildDir / cacheDirName
-    buildCacheTestDir    = buildCacheDir / testDirName
-    buildTargetDir       = buildDir / targetDirName
-    buildTargetTestDir   = "$1_$2"%[buildTargetDir, testDirName]
-
-    scriptDir            = scriptDirName
-    scriptNimDir         = scriptDir / nimFileExt
+  buildDir           = buildDirName
+  buildCacheDir      = buildDir / cacheDirName
+  buildCacheTestDir  = buildCacheDir / testDirName
+  buildTargetDir     = buildDir / targetDirName
+  buildTargetTestDir = "$1_$2"%[buildTargetDir, testDirName]
 
 
 proc getNameFromDir(aPath: string): string =

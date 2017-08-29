@@ -11,12 +11,15 @@ type
     FParentIndex: Natural
     FChildren: SimpleASTNodeSeq
 
+
 proc newSimpleASTNode* (aName: string = ""): SimpleASTNode {. inline .} =
   result = SimpleASTNode()
   result.FName = aName
 
+
 proc name* (aSimpleASTNode: SimpleASTNode): string {. inline .} =
   result = aSimpleASTNode.FName
+
 
 proc value* (aSimpleASTNode: SimpleASTNode): string {. inline .} =
   let lChildren = aSimpleASTNode.FChildren
@@ -27,6 +30,7 @@ proc value* (aSimpleASTNode: SimpleASTNode): string {. inline .} =
     for lChild in lChildren:
       result &= lChild.value
 
+
 proc addChild* (aSimpleASTNode, aChild: SimpleASTNode): bool {. inline .} =
   result = ((not aChild.isNil) and (aChild.FParent.isNil))
   if result:
@@ -36,14 +40,18 @@ proc addChild* (aSimpleASTNode, aChild: SimpleASTNode): bool {. inline .} =
     aSimpleASTNode.FChildren.add(aChild)
     aChild.FParent = aSimpleASTNode
 
+
 proc setValue* (aSimpleASTNode: SimpleASTNode, aValue: string): bool {. inline .} =
   result = (aSimpleASTNode.FChildren.isNil and aSimpleASTNode.addChild(newSimpleASTNode(aValue)))
+
 
 proc parent* (aSimpleASTNode: SimpleASTNode): SimpleASTNode {. inline .} =
   result = aSimpleASTNode.FParent
 
+
 proc parentIndex* (aSimpleASTNode: SimpleASTNode): Natural {. inline .} =
   result = aSimpleASTNode.FParentIndex
+
 
 proc children* (aSimpleASTNode: SimpleASTNode): SimpleASTNodeSeq {. inline .} =
   result = aSimpleASTNode.FChildren
@@ -54,11 +62,13 @@ const
   lcClose = ')'
   lcEscapeChars : set[char] = {lcOpen, lcClose}
 
+
 proc asASTStr* (aSimpleASTNode: SimpleASTNode): string {. inline .} =
   result = aSimpleASTNode.name.strToEscapedStr(lcBackSlash, lcEscapeChars) & lcOpen
   for lChild in aSimpleASTNode.children:
     result &= lChild.asASTStr
   result &= lcClose
+
 
 proc asSimpleASTNode* (aASTStr: string): SimpleASTNode {. inline .} =
   var lIndex = 0

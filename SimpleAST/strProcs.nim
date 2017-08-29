@@ -1,6 +1,7 @@
 
 import setProcs
 
+
 proc strToEscapedStr* (aString: string, aEscapeChar: char, aEscapeCharSet:set[char]): string {. inline .} =
   result = ""
   let lEscapeCharSet = aEscapeCharSet + {aEscapeChar}
