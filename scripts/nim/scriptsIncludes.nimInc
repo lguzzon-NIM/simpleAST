@@ -7,23 +7,24 @@ include "scriptsEnvVarNames.nimInc"
 
 
 const
-  gcWindowsStr       = "windows"
+  gcWindowsStr         = "windows"
 
-  nimFileExt         = "nim"
+  gcNimFileExt         = "nim"
 
-  buildDirName       = "builds"
-  cacheDirName       = "caches"
-  targetDirName      = "targets"
-  testDirName        = "tests"
+  gcBuildDirName       = "builds"
+  gcCacheDirName       = "caches"
+  gcTargetDirName      = "targets"
+  gcTestDirName        = "tests"
   
-  testDir            = testDirName
+  gcTestDir            = gcTestDirName
 
-  buildDir           = buildDirName
-  buildCacheDir      = buildDir / cacheDirName
-  buildCacheTestDir  = buildCacheDir / testDirName
-  buildTargetDir     = buildDir / targetDirName
-  buildTargetTestDir = "$1_$2"%[buildTargetDir, testDirName]
-
+  gcBuildDir           = gcBuildDirName
+  gcBuildCacheDir      = gcBuildDir / gcCacheDirName
+  gcBuildCacheTestDir  = gcBuildCacheDir / gcTestDirName
+  gcBuildTargetDir     = gcBuildDir / gcTargetDirName
+  gcBuildTargetTestDir = "$1_$2"%[gcBuildTargetDir, gcTestDirName]
+  gcRepoURL            = "https://github.com/lguzzon-NIM/" & "n" & "imTemplate.git" 
+  
 
 proc getNameFromDir(aPath: string): string =
   result = aPath.splitFile.name
@@ -62,7 +63,7 @@ proc getBinaryFileName (): string =
 
 
 proc getBuildBinaryFile (): string =
-   buildTargetDir  / getBinaryFileName()
+   gcBuildTargetDir  / getBinaryFileName()
 
 
 proc splitCmdLine(): tuple[options, command, params: string] =
@@ -103,7 +104,7 @@ template dependsOn (tasks: untyped) =
 
 
 proc build_create () =
-  for Dir in @[buildCacheDir, buildTargetDir, buildTargetTestDir]:
+  for Dir in @[gcBuildCacheDir, gcBuildTargetDir, gcBuildTargetTestDir]:
     if not dirExists(Dir):
       mkdir Dir
 
@@ -117,7 +118,7 @@ proc Dirs (aDirPath: string): seq[string] =
 
 proc findTestFiles (): seq[string] =
   result = newSeq[string]()
-  for lDirPath in Dirs(testDir):
+  for lDirPath in Dirs(gcTestDir):
     for lFilePath in listFiles(lDirPath):
       if lFilePath.endsWith("_test.nim"):
         result.add(lFilePath)
@@ -129,7 +130,7 @@ proc switchCommon () =
     switch "define", "release"
   switch "verbosity", lNimVerbosity
   switch "out", getBuildBinaryFile()
-  switch "nimcache", buildCacheDir
+  switch "nimcache", gcBuildCacheDir
   switch "app", "console"
   switch "os", getTargetOS()
   let lTargetCPU = getTargetCPU()
@@ -146,7 +147,7 @@ proc switchCommon () =
 
 
 proc getTestBinaryFilePath (aSourcePath: string): string =
-  result = "$1_$2_$3$4"%[buildTargetTestDir / splitFile(aSourcePath).name, getTargetOS(), getTargetCPU(), getBinaryFileExt()]
+  result = "$1_$2_$3$4"%[gcBuildTargetTestDir / splitFile(aSourcePath).name, getTargetOS(), getTargetCPU(), getBinaryFileExt()]
 
 
 const
@@ -154,12 +155,32 @@ const
 
 
 proc getSourceMainFile (): string =
-  let lMainFile = getSourceDir() / thisDir().getNameFromDir() & "." & nimFileExt
+  let lMainFile = getSourceDir() / thisDir().getNameFromDir() & "." & gcNimFileExt
   if fileExists(lMainFile):
     result = lMainFile
   else:
     let lMessage = "Not found source [$1] in [$2]"%[lMainFile, thisDir()]
     raiseAssert(lMessage)
+
+
+proc getLatestTagOfGitRepo(aRepoUrl: string): string =
+  let lExec = gorgeEx("git ls-remote --tags $1"%[aRepoURL])
+  var lMaxTagStr = ""
+  result = ""
+  for lString in lExec.output.splitlines:
+    let lTag = lString.rsplit('/',1)
+    if lTag.len > 1:
+      if not lTag[1].contains('^'):
+        let lNumbers=lTag[1].split('.')
+        var lNumberStr = ""
+        for lIndex in 0..5:
+          if lIndex < lNumbers.len:
+            lNumberStr &= lNumbers[lIndex].align(8,'0')
+          else:
+            lNumberStr &= "".align(8,'0')
+        if lNumberStr > lMaxTagStr:
+          lMaxTagStr = lNumberStr
+          result = lTag[1]
 
 
 mode = if getNimVerbosity() == "0": ScriptMode.Silent else: ScriptMode.Verbose 
@@ -178,13 +199,12 @@ task Settings, "display alla settings":
   Target CPU  : [$3]
   Binary File : [$6]
   """ 
-  echo lInfos % [if lcIsNimble: "Nimble" else: "Nim", getTargetOS(), getTargetCPU(),  getSourceDir(), getSourceMainFile(), getBuildBinaryFile()]  
+  echo lInfos%[if lcIsNimble: "Nimble" else: "Nim", getTargetOS(), getTargetCPU(),  getSourceDir(), getSourceMainFile(), getBuildBinaryFile()]  
 
 
 task CreateNew, "create a new project from " & "n" & "imTemplate":
   #To avoid string replace ... ;)
-  let lRepoURL = "https://github.com/lguzzon/" & "n" & "imTemplate.git" 
-  let lString = lRepoURL.rsplit('/',1)[1].splitFile.name
+  let lString = gcRepoURL.rsplit('/',1)[1].splitFile.name
 
 
   proc checkProjectName(aProjectName: string, aValidCharSet: set[char]): bool =
@@ -228,8 +248,9 @@ task CreateNew, "create a new project from " & "n" & "imTemplate":
     echo "Please provide a project name not containing invalid cahrs $1"%["{'a'..'z', 'A'..'Z', '0'..'9', '_'}"]
     return
   let lNewProjectDir = lParentDir / lNewProjectName
-  echo "Cloning [$1] to [$2]" % [lRepoURL, lNewProjectDir]
-  exec("git clone -b $3 --single-branch $1 $2" % [lRepoURL, lNewProjectDir, "develop"])
+  let lTag = getLatestTagOfGitRepo(gcRepoURL)
+  echo "Cloning [$1] tag [$3] to [$2]"%[gcRepoURL, lNewProjectDir, lTag]
+  discard gorgeEx("git clone -b \"$3\" --single-branch $1 $2"%[gcRepoURL, lNewProjectDir, lTag])
   echo "Resetting files and dirs ..."
   resetProjectDir(lNewProjectDir,lNewProjectName)
   echo "... done"
@@ -241,8 +262,8 @@ task Clean, "clean the project":
   let lFileToRemove = "$1.$2"%[thisDir().getNameFromDir(), ExeExt]
   if fileExists(lFileToRemove):
     lFileToRemove.rmFile()
-  if dirExists(buildDir):
-    buildDir.rmDir()
+  if dirExists(gcBuildDir):
+    gcBuildDir.rmDir()
   else:
     echo "Nothing to clean"
 
@@ -250,7 +271,7 @@ task Clean, "clean the project":
 task CompileTest_OSLinux_OSWindows, "":
   switchCommon()
   switch "path", getSourceDir()
-  switch "nimcache", buildCacheTestDir
+  switch "nimcache", gcBuildCacheTestDir
   let lFilePath = lcTestAppFileNameEnvVarName.getEnv()
   switch "out", lFilePath.getTestBinaryFilePath()
   setCommand "compile", lFilePath
@@ -265,7 +286,7 @@ task CompileAndRunTest, "":
   let lFilePath = lcTestAppFileNameEnvVarName.getEnv()
   switchCommon()
   switch "path", getSourceDir()
-  switch "nimcache", buildCacheTestDir
+  switch "nimcache", gcBuildCacheTestDir
   switch "out", getTestBinaryFilePath(lFilePath)
   switch "putenv", "$1=\"$2\""%[gcApplicationToTestEnvVarName,getBuildBinaryFile()]
   switch "run"
@@ -324,6 +345,12 @@ task CRun, "clean and run the project ex: nim --putenv:runParams=\"<Parameters>\
   dependsOn Clean Run
 
 
+task UpdateScript, "update this script to latest releas in " & "n" & "imTemplate [uses svn on github]":
+  let lFromScript = "scripts/nim/scriptsIncludes.nimInc"
+  lFromScript.cpFile(lFromScript & "_OLD")  
+  exec("svn export --force \"$1/tags/$2/$3\" \"$3\""%[gcRepoURL, getLatestTagOfGitRepo(gcRepoURL), lFromScript])
+
+
 task NInstall, "install project using nimble":
   exec("nimble -y install")
 
@@ -359,3 +386,4 @@ task Util_TravisEnvMat, "generate the complete travis-ci env matrix":
 
   lGetEnvValue("",lEnvsLow)
   echo lResult
+
