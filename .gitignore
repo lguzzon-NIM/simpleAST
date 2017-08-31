@@ -1,1 +1,12 @@
-nimcache/
+*
+!\.gitignore
+!\.travis.yml
+!/config.nims
+!/SimpleAST.nimble
+!/SimpleAST.nim
+!/LICENSE
+!/README.md
+!*\.md
+!/SimpleAST/
+!/scripts/
+!/tests/
