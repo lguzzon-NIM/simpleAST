@@ -17,5 +17,7 @@ suite "unit-test suite":
     let 
       lTestStringRif = "pappo(pappo(\\\\())peppo(\\(())pippo()poppo(\\)())puppo(pappo()))"
       lSimpleASTNode = lTestStringRif.asSimpleASTNode
-      lTestString = lSimpleASTNode.asASTStr
-    assert(lTestString == lTestStringRif)
+    assert(not lSimpleASTNode.isNil)
+    if (not lSimpleASTNode.isNil):
+      let lTestString = lSimpleASTNode.asASTStr
+      assert(lTestString == lTestStringRif)

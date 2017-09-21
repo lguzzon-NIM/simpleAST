@@ -1,6 +1,6 @@
 
 import sets
-import strutils 
+import strutils
 import ospaths
 
 include "scriptsEnvVarNames.nimInc"
@@ -15,7 +15,7 @@ const
   gcCacheDirName       = "caches"
   gcTargetDirName      = "targets"
   gcTestDirName        = "tests"
-  
+
   gcTestDir            = gcTestDirName
 
   gcBuildDir           = gcBuildDirName
@@ -23,22 +23,22 @@ const
   gcBuildCacheTestDir  = gcBuildCacheDir / gcTestDirName
   gcBuildTargetDir     = gcBuildDir / gcTargetDirName
   gcBuildTargetTestDir = "$1_$2"%[gcBuildTargetDir, gcTestDirName]
-  gcRepoURL            = "https://github.com/lguzzon-NIM/" & "n" & "imTemplate.git" 
-  
+  gcRepoURL            = "https://github.com/lguzzon-NIM/" & "n" & "imTemplate.git"
+
 
 proc getNameFromDir(aPath: string): string =
   result = aPath.splitFile.name
   let lRFind = result.rFind({'-'})
-  if lRFind > -1: 
+  if lRFind > -1:
     result.delete(lRFind, <result.len)
   result = result
 
 
-proc getSourceDir(): string = 
+proc getSourceDir(): string =
   result = "."
 
 
-proc getTargetOS (): string = 
+proc getTargetOS (): string =
   if existsEnv(gcTargetOSEnvVarName): getEnv(gcTargetOSEnvVarName) else: hostOS
 
 
@@ -82,12 +82,12 @@ proc splitCmdLine(): tuple[options, command, params: string] =
     lIndex.inc
   lResult = ""
   while lIndex <= lCount:
-    lResult &= " "  & paramStr(lIndex) 
+    lResult &= " "  & paramStr(lIndex)
     lIndex.inc
   result.params = lResult.strip()
 
 
-template selfExecWithDefaults (aCommand: string) = 
+template selfExecWithDefaults (aCommand: string) =
   var lCmdLine = splitCmdLine()
   if (getNimVerbosity() == "0") and (not lCmdLine.options.contains("--hint")):
     lCmdLine.options &= " --hints:off"
@@ -183,7 +183,7 @@ proc getLatestTagOfGitRepo(aRepoUrl: string): string =
           result = lTag[1]
 
 
-mode = if getNimVerbosity() == "0": ScriptMode.Silent else: ScriptMode.Verbose 
+mode = if getNimVerbosity() == "0": ScriptMode.Silent else: ScriptMode.Verbose
 
 
 task Tasks, "list all tasks":
@@ -198,8 +198,8 @@ task Settings, "display alla settings":
   Target OS   : [$2]
   Target CPU  : [$3]
   Binary File : [$6]
-  """ 
-  echo lInfos%[if lcIsNimble: "Nimble" else: "Nim", getTargetOS(), getTargetCPU(),  getSourceDir(), getSourceMainFile(), getBuildBinaryFile()]  
+  """
+  echo lInfos%[if lcIsNimble: "Nimble" else: "Nim", getTargetOS(), getTargetCPU(),  getSourceDir(), getSourceMainFile(), getBuildBinaryFile()]
 
 
 task CreateNew, "create a new project from " & "n" & "imTemplate":
@@ -212,7 +212,7 @@ task CreateNew, "create a new project from " & "n" & "imTemplate":
     for lChar in aProjectName:
       if not (lChar in aValidCharSet):
         result = false
-        break          
+        break
 
 
   proc resetProjectDir(aProjectDir, aNewProjectName: string) =
@@ -220,12 +220,12 @@ task CreateNew, "create a new project from " & "n" & "imTemplate":
     rmDir(aProjectDir / ".git")
     for lDirPath in Dirs(aProjectDir):
       for lFilePath in listFiles(lDirPath):
-        let lOldString = lFilePath.splitFile 
+        let lOldString = lFilePath.splitFile
         let lNewString = lOldString.name.replace(lString,aNewProjectName)
         if lNewString != lOldString.name:
           lFSItemsToMove.add((lFilePath, lOldString.dir / lNewString & lOldString.ext))
     for lDirPath in Dirs(aProjectDir):
-      let lOldString = lDirPath.splitFile 
+      let lOldString = lDirPath.splitFile
       let lNewString = lOldString.name.replace(lString,aNewProjectName)
       if lNewString != lOldString.name:
         lFSItemsToMove.add((lDirPath, lOldString.dir / lNewString & lOldString.ext))
@@ -237,9 +237,9 @@ task CreateNew, "create a new project from " & "n" & "imTemplate":
         let lNewString = lOldString.replace(lString,aNewProjectName)
         if lNewString != lOldString:
           lFilePath.writeFile(lNewString)
-          
+
   let lNewProjectName = splitCmdLine().params
-  let lValidCharSet = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'} 
+  let lValidCharSet = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
   let lParentDir = thisDir() / ".."
   if  lNewProjectName == "":
     echo "Please provide new project name as param"
@@ -254,7 +254,7 @@ task CreateNew, "create a new project from " & "n" & "imTemplate":
   echo "Resetting files and dirs ..."
   resetProjectDir(lNewProjectDir,lNewProjectName)
   echo "... done"
-    
+
 
 task Clean, "clean the project":
   if dirExists("nimcache"):
@@ -301,7 +301,7 @@ task Test, "test/s the project":
     of "linux":
       if (getTargetOS() == gcWindowsStr):
         lCommandToExec = "CompileAndRunTest_OSLinux_OSWindows"
-    selfExecWithDefaults("\"--putenv:$1=$2\" $3"%[lcTestAppFileNameEnvVarName, lFilePath, lCommandToExec]) 
+    selfExecWithDefaults("\"--putenv:$1=$2\" $3"%[lcTestAppFileNameEnvVarName, lFilePath, lCommandToExec])
 
 
 task CTest, "clean and test/s the project":
@@ -318,8 +318,9 @@ task BuildBinary, "":
 task Build, "build the project":
   if not fileExists(getBuildBinaryFile()):
     dependsOn BuildBinary
-    exec "strip " & getBuildBinaryFile()
-    exec "upx --best " & getBuildBinaryFile()
+    if splitCmdLine().params == "release":
+      exec "strip " & getBuildBinaryFile()
+      exec "upx --best " & getBuildBinaryFile()
 
 
 task CBuild, "clean and build the project":
@@ -327,11 +328,11 @@ task CBuild, "clean and build the project":
 
 
 task BuildToDeploy, "Build the project ready to deploy":
-  selfExecWithDefaults("--passC:-O4 --passL:-static Test")
+  selfExecWithDefaults("--passC:-O4 --passL:-static Test release")
 
 
 task CBuildToDeploy, "clean and build the project ready to deploy":
-  selfExecWithDefaults("--passC:-O4 --passL:-static CTest")
+  selfExecWithDefaults("--passC:-O4 --passL:-static CTest release")
 
 
 task Run, "run the project ex: nim --putenv:runParams=\"<Parameters>\" run":
@@ -345,9 +346,9 @@ task CRun, "clean and run the project ex: nim --putenv:runParams=\"<Parameters>\
   dependsOn Clean Run
 
 
-task UpdateScript, "update this script to latest releas in " & "n" & "imTemplate [uses svn on github]":
+task UpdateScript, "update this script to latest release in " & "n" & "imTemplate [uses svn on github]":
   let lFromScript = "scripts/nim/scriptsIncludes.nimInc"
-  lFromScript.cpFile(lFromScript & "_OLD")  
+  lFromScript.cpFile(lFromScript & "_OLD")
   exec("svn export --force \"$1/tags/$2/$3\" \"$3\""%[gcRepoURL, getLatestTagOfGitRepo(gcRepoURL), lFromScript])
 
 
@@ -366,14 +367,14 @@ task NUninstall, "Uninstall project using nimble":
 task NCompile, "Compile using nimble":
   dependson Clean
   exec("nimble -y c " & getSourceMainFile())
-  
+
 
 task Util_TravisEnvMat, "generate the complete travis-ci env matrix":
-  const 
+  const
     lEnvs = @[@[gcGCCVersionToUseEnvVarName,"4.8","4.9","5","6","7"],@[gcNimBranchToUseEnvVarName,"master","devel"],@[gcTargetOSEnvVarName,"linux",gcWindowsStr],@[gcTargetCpuEnvVarName,"amd64","i386"]]
     lEnvsLow = lEnvs.low
     lEnvsHigh = lEnvs.high
-  var  
+  var
     lResult = ""
 
   proc lGetEnvValue(aResult: string, aIndex: int) =
