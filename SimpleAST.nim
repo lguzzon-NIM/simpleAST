@@ -1,6 +1,6 @@
 
 import strUtils
-import SimpleAST.strProcs
+import simpleAST.strProcs
 
 type
   SimpleASTNodeRef* = ref SimpleASTNodeObject
