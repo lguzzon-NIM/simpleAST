@@ -1,13 +1,14 @@
 
-import SimpleAST.strProcs
+import strUtils
+import simpleAST.strProcs
 
 type
-  SimpleASTNode* = ref SimpleASTNodeObject
+  SimpleASTNodeRef* = ref SimpleASTNodeObject
+  SimpleASTNode* = SimpleASTNodeRef not nil
   SimpleASTNodeSeq* = seq[SimpleASTNode]
   SimpleASTNodeObject* = object
     FName: string
-    isVoid*: bool
-    FParent: SimpleASTNode
+    FParent: SimpleASTNodeRef
     FParentIndex: Natural
     FChildren: SimpleASTNodeSeq
 
@@ -32,7 +33,7 @@ proc value* (aSimpleASTNode: SimpleASTNode): string {. inline .} =
 
 
 proc addChild* (aSimpleASTNode, aChild: SimpleASTNode): bool {. inline .} =
-  result = ((not aChild.isNil) and (aChild.FParent.isNil))
+  result = aChild.FParent.isNil
   if result:
     if aSimpleASTNode.FChildren.isNil:
       aSimpleASTNode.FChildren = newSeqOfCap[SimpleASTNode](1)
@@ -45,7 +46,7 @@ proc setValue* (aSimpleASTNode: SimpleASTNode, aValue: string): bool {. inline .
   result = (aSimpleASTNode.FChildren.isNil and aSimpleASTNode.addChild(newSimpleASTNode(aValue)))
 
 
-proc parent* (aSimpleASTNode: SimpleASTNode): SimpleASTNode {. inline .} =
+proc parent* (aSimpleASTNode: SimpleASTNode): SimpleASTNodeRef {. inline .} =
   result = aSimpleASTNode.FParent
 
 
@@ -70,30 +71,35 @@ proc asASTStr* (aSimpleASTNode: SimpleASTNode): string {. inline .} =
   result &= lcClose
 
 
-proc asSimpleASTNode* (aASTStr: string): SimpleASTNode {. inline .} =
+proc asSimpleASTNode* (aASTStr: string): SimpleASTNodeRef {. inline .} =
   var lIndex = 0
   var lStartIndex = lIndex
-  var lASTRootNode: SimpleASTNode = nil
-  var lASTNode: SimpleASTNode = nil
+  var lASTRootNode: SimpleASTNodeRef
   let lLen = aASTStr.len
   while lIndex < lLen:
     case aASTStr[lIndex]
     of lcOpen:
-      lASTNode = newSimpleASTNode(aASTStr.substr(lStartIndex, <lIndex).escapedStrToStr(lcBackSlash))
-      if not lASTRootNode.isNil:
-        discard lASTRootNode.addChild(lASTNode)
+      let lASTNode = newSimpleASTNode(aASTStr.substr(lStartIndex, <lIndex).escapedStrToStr(lcBackSlash))
+      if (not lASTRootNode.isNil):
+        let lAddChild = lASTRootNode.addChild(lASTNode)
+        assert(lAddChild, "AddChild reurned false adding aNode")
       lASTRootNode = lASTNode
       lStartIndex = lIndex + 1
     of lcClose:
-      if not lASTRootNode.parent.isNil:
-        lASTRootNode = lASTRootNode.parent
-        lStartIndex = lIndex + 1
+      if (not lASTRootNode.isNil):
+        let lASTNode : SimpleASTNode = lASTRootNode
+        if (not lASTNode.parent.isNil):
+          lASTRootNode = lASTNode.parent
+          lStartIndex = lIndex + 1
+        else:
+          if lIndex == <lLen:
+            result = lASTNode
+          break
       else:
-        if lIndex == <lLen:
-          result = lASTRootNode
         break
     of lcBackSlash:
       lIndex.inc
     else:
       discard
     lIndex.inc
+
