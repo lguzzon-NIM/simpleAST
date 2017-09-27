@@ -2,11 +2,11 @@
 !\.gitignore
 !\.travis.yml
 !/config.nims
-!/SimpleAST.nimble
-!/SimpleAST.nim
+!/simpleAST.nimble
+!/simpleAST.nim
 !/LICENSE
 !/README.md
 !*\.md
-!/SimpleAST/
+!/simpleAST/
 !/scripts/
 !/tests/
