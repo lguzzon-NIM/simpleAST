@@ -4,7 +4,7 @@ import os
 import osproc
 import strutils
 
-import SimpleAST.strProcs
+import simpleAST.strProcs
 
 
 suite "strProcs unit-test suite":

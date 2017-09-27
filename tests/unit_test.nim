@@ -4,7 +4,7 @@ import os
 import osproc
 import strutils
 
-import SimpleAST
+import simpleAST
 
 
 suite "unit-test suite":
