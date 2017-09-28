@@ -93,7 +93,7 @@ template selfExecWithDefaults (aCommand: string) =
     lCmdLine.options &= " --hints:off"
   let lCommand = lCmdLine.options & " " & aCommand.strip() & " " & lCmdLine.params
   if lcIsNimble:
-    exec("nim " & lCommand.strip)
+    exec(selfExe().splitFile.dir / "nim " & lCommand.strip)
   else:
     selfExec(lCommand.strip)
 
@@ -353,20 +353,20 @@ task UpdateScript, "update this script to latest release in " & "n" & "imTemplat
 
 
 task NInstall, "install project using nimble":
-  exec("nimble -y install")
+  exec(selfExe().splitFile.dir / "nimble -y install")
 
 
 task NInstallDeps, "install project dependencies using nimble":
-  exec("nimble -y install -d")
+  exec(selfExe().splitFile.dir / "nimble -y install -d")
 
 
 task NUninstall, "Uninstall project using nimble":
-  exec("nimble -y uninstall " & thisDir().getNameFromDir())
+  exec(selfExe().splitFile.dir / "nimble -y uninstall " & thisDir().getNameFromDir())
 
 
 task NCompile, "Compile using nimble":
   dependson Clean
-  exec("nimble -y c " & getSourceMainFile())
+  exec(selfExe().splitFile.dir / "nimble -y c " & getSourceMainFile())
 
 
 task Util_TravisEnvMat, "generate the complete travis-ci env matrix":
