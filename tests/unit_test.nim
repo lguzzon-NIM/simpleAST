@@ -11,7 +11,7 @@ suite "unit-test suite":
 
   test "newSimpleASTNode":
     let lSimpleASTNode = newSimpleASTNode("TEST")
-    assert(lSimpleASTNode.hasChildren == false)
+    assert(lSimpleASTNode.children.isNil)
     assert(lSimpleASTNode.name == "TEST")
 
   test "asASTStr":
