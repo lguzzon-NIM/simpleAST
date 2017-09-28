@@ -57,6 +57,7 @@ proc parentIndex* (aSimpleASTNode: SimpleASTNode): Natural {. inline .} =
 proc children* (aSimpleASTNode: SimpleASTNode): SimpleASTNodeSeq {. inline .} =
   result = aSimpleASTNode.FChildren
 
+
 const
   lcBackSlash = '\\'
   lcOpen = '('
