@@ -1,8 +1,5 @@
 
 import unittest
-import os
-import osproc
-import strutils
 
 import simpleAST
 
