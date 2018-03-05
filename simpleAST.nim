@@ -80,7 +80,7 @@ proc asSimpleASTNode* (aASTStr: string): SimpleASTNodeRef {. inline .} =
   while lIndex < lLen:
     case aASTStr[lIndex]
     of lcOpen:
-      let lASTNode = newSimpleASTNode(aASTStr.substr(lStartIndex, <lIndex).escapedStrToStr(lcBackSlash))
+      let lASTNode = newSimpleASTNode(aASTStr.substr(lStartIndex, lIndex.pred).escapedStrToStr(lcBackSlash))
       if (not lASTRootNode.isNil):
         let lAddChild = lASTRootNode.addChild(lASTNode)
         assert(lAddChild, "AddChild reurned false adding aNode")
@@ -93,7 +93,7 @@ proc asSimpleASTNode* (aASTStr: string): SimpleASTNodeRef {. inline .} =
           lASTRootNode = lASTNode.parent
           lStartIndex = lIndex + 1
         else:
-          if lIndex == <lLen:
+          if lIndex == lLen.pred:
             result = lASTNode
           break
       else:

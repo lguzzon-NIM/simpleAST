@@ -30,7 +30,7 @@ proc getNameFromDir(aPath: string): string =
   result = aPath.splitFile.name
   let lRFind = result.rFind({'-'})
   if lRFind > -1:
-    result.delete(lRFind, <result.len)
+    result.delete(lRFind, result.len.pred)
   result = result
 
 
