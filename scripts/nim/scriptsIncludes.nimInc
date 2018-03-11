@@ -30,8 +30,7 @@ proc getNameFromDir(aPath: string): string =
   result = aPath.splitFile.name
   let lRFind = result.rFind({'-'})
   if lRFind > -1:
-    result.delete(lRFind, result.len.pred)
-  result = result
+    result.delete(lRFind, result.len.pred())
 
 
 proc getSourceDir(): string =
@@ -349,7 +348,7 @@ task CBuild, "clean and build the project":
   dependsOn Clean Build
 
 
-task BuildToDeploy, "build the project ready to deploy":
+task BuildToDeploy, "Build the project ready to deploy":
   selfExecWithDefaults("--passC:-O4 --passL:-static Test release")
 
 
@@ -382,11 +381,11 @@ task NInstallDeps, "install project dependencies using nimble":
   exec(selfExe().splitFile.dir / "nimble -y install -d")
 
 
-task NUninstall, "uninstall project using nimble":
+task NUninstall, "Uninstall project using nimble":
   exec(selfExe().splitFile.dir / "nimble -y uninstall " & thisDir().getNameFromDir())
 
 
-task NCompile, "compile using nimble":
+task NCompile, "Compile using nimble":
   dependson Clean
   exec(selfExe().splitFile.dir / "nimble -y c " & getSourceMainFile())
 
