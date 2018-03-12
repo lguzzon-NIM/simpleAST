@@ -348,7 +348,7 @@ task CBuild, "clean and build the project":
   dependsOn Clean Build
 
 
-task BuildToDeploy, "Build the project ready to deploy":
+task BuildToDeploy, "build the project ready to deploy":
   selfExecWithDefaults("--passC:-O4 --passL:-static Test release")
 
 
@@ -381,11 +381,11 @@ task NInstallDeps, "install project dependencies using nimble":
   exec(selfExe().splitFile.dir / "nimble -y install -d")
 
 
-task NUninstall, "Uninstall project using nimble":
+task NUninstall, "uninstall project using nimble":
   exec(selfExe().splitFile.dir / "nimble -y uninstall " & thisDir().getNameFromDir())
 
 
-task NCompile, "Compile using nimble":
+task NCompile, "compile using nimble":
   dependson Clean
   exec(selfExe().splitFile.dir / "nimble -y c " & getSourceMainFile())
 
