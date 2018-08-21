@@ -172,7 +172,7 @@ proc getSourceMainFile (): string =
 
 proc getLatestTagOfGitRepo(aRepoUrl: string): string =
   let lExec = gorgeEx("git ls-remote --tags $1"%[aRepoURL])
-  var lMaxTagStr = ""
+  var lMaxTagStr = "0"
   result = ""
   for lString in lExec.output.splitlines:
     let lTag = lString.rsplit('/',1)
