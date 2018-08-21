@@ -2,7 +2,7 @@
 import strUtils
 import simpleAST/strProcs
 
-when NimVersion >= "0.18.0":
+when NimVersion > "0.18.0":
   {.experimental: "notnil".}
 
 type
