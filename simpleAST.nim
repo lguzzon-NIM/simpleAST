@@ -2,6 +2,8 @@
 import strUtils
 import simpleAST.strProcs
 
+{.experimental: "notnil".}
+
 type
   SimpleASTNodeRef* = ref SimpleASTNodeObject
   SimpleASTNode* = SimpleASTNodeRef not nil

@@ -39,6 +39,7 @@ readonly lUPXVersion=$(git ls-remote --tags "https://github.com/upx/upx.git" | a
 curl -z upx.txz -o upx.txz -L "https://github.com/upx/upx/releases/download/v${lUPXVersion}/upx-${lUPXVersion}-amd64_linux.tar.xz"
 tar -xvf upx.txz
 export PATH
+# shellcheck disable=SC2123
 PATH="$(pwd)/upx-${lUPXVersion}-amd64_linux${PATH:+:$PATH}" || true
 
 popd
