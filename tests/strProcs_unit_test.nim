@@ -1,7 +1,7 @@
 
 import unittest
 
-import simpleAST.strProcs
+import simpleAST/strProcs
 
 
 suite "strProcs unit-test suite":

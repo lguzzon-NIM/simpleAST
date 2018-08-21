@@ -1,8 +1,9 @@
 
 import strUtils
-import simpleAST.strProcs
+import simpleAST/strProcs
 
-{.experimental: "notnil".}
+when NimVersion >= "0.18.0":
+  {.experimental: "notnil".}
 
 type
   SimpleASTNodeRef* = ref SimpleASTNodeObject
