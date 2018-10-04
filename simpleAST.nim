@@ -1,6 +1,9 @@
 
 import strUtils
-import simpleAST.strProcs
+import simpleAST/strProcs
+
+when NimVersion > "0.18.0":
+  {.experimental: "notnil".}
 
 type
   SimpleASTNodeRef* = ref SimpleASTNodeObject
@@ -55,6 +58,7 @@ func parentIndex* (aSimpleASTNode: SimpleASTNode): Natural {. inline .} =
 func children* (aSimpleASTNode: SimpleASTNode): SimpleASTNodeSeq {. inline .} =
   result = aSimpleASTNode.FChildren
 
+
 const
   lcBackSlash = '\\'
   lcOpen = '('
@@ -77,7 +81,7 @@ func asSimpleASTNode* (aASTStr: string): SimpleASTNodeRef {. inline .} =
   while lIndex < lLen:
     case aASTStr[lIndex]
     of lcOpen:
-      let lASTNode = newSimpleASTNode(aASTStr.substr(lStartIndex, <lIndex).escapedStrToStr(lcBackSlash))
+      let lASTNode = newSimpleASTNode(aASTStr.substr(lStartIndex, lIndex.pred).escapedStrToStr(lcBackSlash))
       if (not lASTRootNode.isNil):
         let lAddChild = lASTRootNode.addChild(lASTNode)
         assert(lAddChild, "AddChild reurned false adding aNode")
@@ -90,7 +94,7 @@ func asSimpleASTNode* (aASTStr: string): SimpleASTNodeRef {. inline .} =
           lASTRootNode = lASTNode.parent
           lStartIndex = lIndex + 1
         else:
-          if lIndex == <lLen:
+          if lIndex == lLen.pred:
             result = lASTNode
           break
       else:

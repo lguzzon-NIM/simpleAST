@@ -1,5 +1,7 @@
 #!/bin/bash
-set -ev
+set -e
+set -o pipefail
+set -o xtrace
 
 readonly aptGetCmd="sudo -E apt-get -y -qq"
 readonly aptGetInstallCmd="${aptGetCmd} --no-install-suggests --no-install-recommends install"
@@ -34,12 +36,19 @@ pushd ${lDownloadPath}
 
 #Install UPX
 readonly lUPXVersion=$(git ls-remote --tags "https://github.com/upx/upx.git" | awk '{print $2}' | grep -v '{}' | awk -F"/" '{print $3}' | tail -1 | sed "s/v//g")
-curl -z upx.txz -o upx.txz -L https://github.com/upx/upx/releases/download/v${lUPXVersion}/upx-${lUPXVersion}-amd64_linux.tar.xz
+curl -z upx.txz -o upx.txz -L "https://github.com/upx/upx/releases/download/v${lUPXVersion}/upx-${lUPXVersion}-amd64_linux.tar.xz"
 tar -xvf upx.txz
 export PATH
+# shellcheck disable=SC2123
 PATH="$(pwd)/upx-${lUPXVersion}-amd64_linux${PATH:+:$PATH}" || true
 
 popd
+
+compile() {
+	./bin/nim c koch
+	./koch boot -d:release
+	./koch tools -d:release
+}
 
 readonly lNimAppPath=toCache/nim-${NIM_BRANCH}-${USE_GCC}
 if [ ! -x ${lNimAppPath}/bin/nim ]; then
@@ -50,17 +59,13 @@ if [ ! -x ${lNimAppPath}/bin/nim ]; then
 	sh build.sh
 	popd
 	rm -rf csources
-	bin/nim c koch
-	./koch boot -d:release
-	./koch tools -d:release
+	compile
 	popd
 else
 	pushd ${lNimAppPath}
 	git fetch origin
 	if ! git merge FETCH_HEAD | grep "Already up-to-date"; then
-		bin/nim c koch
-		./koch boot -d:release
-		./koch tools -d:release
+		compile
 	fi
 	popd
 fi

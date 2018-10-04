@@ -1,10 +1,7 @@
 
 import unittest
-import os
-import osproc
-import strutils
 
-import SimpleAST
+import simpleAST
 
 include "../scripts/nim/scriptsEnvVarNames.nimInc"
 

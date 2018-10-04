@@ -1,10 +1,7 @@
 
 import unittest
-import os
-import osproc
-import strutils
 
-import SimpleAST.strProcs
+import simpleAST/strProcs
 
 
 suite "strProcs unit-test suite":
@@ -25,6 +22,13 @@ suite "strProcs unit-test suite":
 
   test "strToEscapedStr and escapeStrToStr":
     let 
+      lTestStringRif = "a test string"
+      lString = lTestStringRif.strToEscapedStr('\\', {' ', 'i'})
+      lTestString = lString.escapedStrToStr('\\')
+    assert(lTestString == lTestStringRif)
+
+  test "strToEscapedStr and escapeStrToStr - const":
+    const 
       lTestStringRif = "a test string"
       lString = lTestStringRif.strToEscapedStr('\\', {' ', 'i'})
       lTestString = lString.escapedStrToStr('\\')

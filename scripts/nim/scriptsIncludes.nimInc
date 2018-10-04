@@ -30,8 +30,7 @@ proc getNameFromDir(aPath: string): string =
   result = aPath.splitFile.name
   let lRFind = result.rFind({'-'})
   if lRFind > -1:
-    result.delete(lRFind, <result.len)
-  result = result
+    result.delete(lRFind, result.len.pred())
 
 
 proc getSourceDir(): string =
@@ -43,23 +42,27 @@ proc getTargetOS (): string =
 
 
 proc getTargetCPU (): string =
-   if existsEnv(gcTargetCpuEnvVarName): getEnv(gcTargetCpuEnvVarName) else: hostCPU
+  if existsEnv(gcTargetCpuEnvVarName): getEnv(gcTargetCpuEnvVarName) else: hostCPU
 
 
 proc getNimVerbosity (): string =
-   if existsEnv(gcNimVerbosityEnvVarName): getEnv(gcNimVerbosityEnvVarName) else: "0"
+  if existsEnv(gcNimVerbosityEnvVarName): getEnv(gcNimVerbosityEnvVarName) else: "0"
 
 
 proc getBinaryFileNameNoExt(): string =
-   "$1_$2_$3"%[thisDir().getNameFromDir(), getTargetOS(), getTargetCPU()]
+  "$1_$2_$3"%[thisDir().getNameFromDir(), getTargetOS(), getTargetCPU()]
 
 
 proc getBinaryFileExt (): string =
-   if (getTargetOS() == gcWindowsStr): ".exe" else: ""
+  if ("js" == getTargetCPU()): 
+    # Check it with this command line: nim --putenv:NIM_VERBOSITY="3" --putenv:NIM_TARGET_CPU="js" CTest
+    ".js"
+  else:
+    if (getTargetOS() == gcWindowsStr): ".exe" else: ""
 
 
 proc getBinaryFileName (): string =
-   if (getTargetOS() == gcWindowsStr): getBinaryFileNameNoExt() & getBinaryFileExt() else: getBinaryFileNameNoExt()
+  if (getTargetOS() == gcWindowsStr): getBinaryFileNameNoExt() & getBinaryFileExt() else: getBinaryFileNameNoExt()
 
 
 proc getBuildBinaryFile (): string =
@@ -93,7 +96,7 @@ template selfExecWithDefaults (aCommand: string) =
     lCmdLine.options &= " --hints:off"
   let lCommand = lCmdLine.options & " " & aCommand.strip() & " " & lCmdLine.params
   if lcIsNimble:
-    exec("nim " & lCommand.strip)
+    exec(selfExe().splitFile.dir / "nim " & lCommand.strip)
   else:
     selfExec(lCommand.strip)
 
@@ -132,18 +135,22 @@ proc switchCommon () =
   switch "out", getBuildBinaryFile()
   switch "nimcache", gcBuildCacheDir
   switch "app", "console"
-  switch "os", getTargetOS()
   let lTargetCPU = getTargetCPU()
-  switch "cpu", lTargetCPU
-  if (lNimVerbosity == "0"):
-    switch "hints", "off"
-  case hostOS
-  of "linux":
-    if ((hostCPU == "amd64") and (lTargetCPU == "i386")):
-      switch "passC", "-m32"
-      switch "passL", "-m32"
-  of gcWindowsStr:
+  case lTargetCPU
+  of "js":
     discard
+  else:
+    switch "os", getTargetOS()
+    switch "cpu", lTargetCPU
+    if (lNimVerbosity == "0"):
+      switch "hints", "off"
+    case hostOS
+    of "linux":
+      if ((hostCPU == "amd64") and (lTargetCPU == "i386")):
+        switch "passC", "-m32"
+        switch "passL", "-m32"
+    of gcWindowsStr:
+      discard
 
 
 proc getTestBinaryFilePath (aSourcePath: string): string =
@@ -165,7 +172,7 @@ proc getSourceMainFile (): string =
 
 proc getLatestTagOfGitRepo(aRepoUrl: string): string =
   let lExec = gorgeEx("git ls-remote --tags $1"%[aRepoURL])
-  var lMaxTagStr = ""
+  var lMaxTagStr = "0"
   result = ""
   for lString in lExec.output.splitlines:
     let lTag = lString.rsplit('/',1)
@@ -183,6 +190,17 @@ proc getLatestTagOfGitRepo(aRepoUrl: string): string =
           result = lTag[1]
 
 
+proc setCompile(aFilePath: string)=
+  let lTargetCPU = getTargetCPU()
+  var lCommand = "compile"
+  case lTargetCPU
+  of "js":
+    lCommand = "js"
+  else:
+    discard
+  setCommand lCommand, aFilePath
+
+
 mode = if getNimVerbosity() == "0": ScriptMode.Silent else: ScriptMode.Verbose
 
 
@@ -193,13 +211,14 @@ task Tasks, "list all tasks":
 task Settings, "display alla settings":
   let lInfos =  """
   Interpreter : [$1]
+  Version     : [$7]
   Source Dir  : [$4]
   Source Main : [$5]
   Target OS   : [$2]
   Target CPU  : [$3]
   Binary File : [$6]
   """
-  echo lInfos%[if lcIsNimble: "Nimble" else: "Nim", getTargetOS(), getTargetCPU(),  getSourceDir(), getSourceMainFile(), getBuildBinaryFile()]
+  echo lInfos%[if lcIsNimble: "Nimble" else: "Nim", getTargetOS(), getTargetCPU(),  getSourceDir(), getSourceMainFile(), getBuildBinaryFile(), NimVersion]
 
 
 task CreateNew, "create a new project from " & "n" & "imTemplate":
@@ -274,7 +293,7 @@ task CompileTest_OSLinux_OSWindows, "":
   switch "nimcache", gcBuildCacheTestDir
   let lFilePath = lcTestAppFileNameEnvVarName.getEnv()
   switch "out", lFilePath.getTestBinaryFilePath()
-  setCommand "compile", lFilePath
+  setCompile(lFilePath)
 
 
 task CompileAndRunTest_OSLinux_OSWindows, "":
@@ -290,7 +309,7 @@ task CompileAndRunTest, "":
   switch "out", getTestBinaryFilePath(lFilePath)
   switch "putenv", "$1=\"$2\""%[gcApplicationToTestEnvVarName,getBuildBinaryFile()]
   switch "run"
-  setCommand "compile", lFilePath
+  setCompile(lFilePath)
 
 
 task Test, "test/s the project":
@@ -312,22 +331,25 @@ task BuildBinary, "":
   dependsOn NInstallDeps
   build_create()
   switchCommon()
-  setCommand "compile", getSourceMainFile()
+  setCompile(getSourceMainFile())
 
 
 task Build, "build the project":
   if not fileExists(getBuildBinaryFile()):
     dependsOn BuildBinary
-    if splitCmdLine().params == "release":
-      exec "strip " & getBuildBinaryFile()
-      exec "upx --best " & getBuildBinaryFile()
+    if ("js" == getTargetCPU()):
+      discard
+    else:
+      if splitCmdLine().params == "release":
+        exec "strip " & getBuildBinaryFile()
+        exec "upx --best " & getBuildBinaryFile()
 
 
 task CBuild, "clean and build the project":
   dependsOn Clean Build
 
 
-task BuildToDeploy, "Build the project ready to deploy":
+task BuildToDeploy, "build the project ready to deploy":
   selfExecWithDefaults("--passC:-O4 --passL:-static Test release")
 
 
@@ -353,25 +375,25 @@ task UpdateScript, "update this script to latest release in " & "n" & "imTemplat
 
 
 task NInstall, "install project using nimble":
-  exec("nimble -y install")
+  exec(selfExe().splitFile.dir / "nimble -y install")
 
 
 task NInstallDeps, "install project dependencies using nimble":
-  exec("nimble -y install -d")
+  exec(selfExe().splitFile.dir / "nimble -y install -d")
 
 
-task NUninstall, "Uninstall project using nimble":
-  exec("nimble -y uninstall " & thisDir().getNameFromDir())
+task NUninstall, "uninstall project using nimble":
+  exec(selfExe().splitFile.dir / "nimble -y uninstall " & thisDir().getNameFromDir())
 
 
-task NCompile, "Compile using nimble":
+task NCompile, "compile using nimble":
   dependson Clean
-  exec("nimble -y c " & getSourceMainFile())
+  exec(selfExe().splitFile.dir / "nimble -y c " & getSourceMainFile())
 
 
 task Util_TravisEnvMat, "generate the complete travis-ci env matrix":
   const
-    lEnvs = @[@[gcGCCVersionToUseEnvVarName,"4.8","4.9","5","6","7"],@[gcNimBranchToUseEnvVarName,"master","devel"],@[gcTargetOSEnvVarName,"linux",gcWindowsStr],@[gcTargetCpuEnvVarName,"amd64","i386"]]
+    lEnvs = @[@[gcGCCVersionToUseEnvVarName,"4.8","4.9","5","6","7","8"],@[gcNimBranchToUseEnvVarName,"master","devel"],@[gcTargetOSEnvVarName,"linux",gcWindowsStr],@[gcTargetCpuEnvVarName,"amd64","i386"]]
     lEnvsLow = lEnvs.low
     lEnvsHigh = lEnvs.high
   var
