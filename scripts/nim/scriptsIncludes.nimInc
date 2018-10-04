@@ -8,6 +8,8 @@ include "scriptsEnvVarNames.nimInc"
 
 const
   gcWindowsStr         = "windows"
+  gcLinuxStr           = "linux"
+  gcAmd64              = "amd64"
 
   gcNimFileExt         = "nim"
 
@@ -66,7 +68,7 @@ proc getBinaryFileName (): string =
 
 
 proc getBuildBinaryFile (): string =
-   gcBuildTargetDir  / getBinaryFileName()
+   gcBuildTargetDir / getBinaryFileName()
 
 
 proc splitCmdLine(): tuple[options, command, params: string] =
@@ -145,8 +147,8 @@ proc switchCommon () =
     if (lNimVerbosity == "0"):
       switch "hints", "off"
     case hostOS
-    of "linux":
-      if ((hostCPU == "amd64") and (lTargetCPU == "i386")):
+    of gcLinuxStr:
+      if ((hostCPU == gcAmd64) and (lTargetCPU == "i386")):
         switch "passC", "-m32"
         switch "passL", "-m32"
     of gcWindowsStr:
@@ -182,9 +184,9 @@ proc getLatestTagOfGitRepo(aRepoUrl: string): string =
         var lNumberStr = ""
         for lIndex in 0..5:
           if lIndex < lNumbers.len:
-            lNumberStr &= lNumbers[lIndex].align(8,'0')
+            lNumberStr &= lNumbers[lIndex].align(8, '0')
           else:
-            lNumberStr &= "".align(8,'0')
+            lNumberStr &= "".align(8, '0')
         if lNumberStr > lMaxTagStr:
           lMaxTagStr = lNumberStr
           result = lTag[1]
@@ -240,12 +242,12 @@ task CreateNew, "create a new project from " & "n" & "imTemplate":
     for lDirPath in Dirs(aProjectDir):
       for lFilePath in listFiles(lDirPath):
         let lOldString = lFilePath.splitFile
-        let lNewString = lOldString.name.replace(lString,aNewProjectName)
+        let lNewString = lOldString.name.replace(lString, aNewProjectName)
         if lNewString != lOldString.name:
           lFSItemsToMove.add((lFilePath, lOldString.dir / lNewString & lOldString.ext))
     for lDirPath in Dirs(aProjectDir):
       let lOldString = lDirPath.splitFile
-      let lNewString = lOldString.name.replace(lString,aNewProjectName)
+      let lNewString = lOldString.name.replace(lString, aNewProjectName)
       if lNewString != lOldString.name:
         lFSItemsToMove.add((lDirPath, lOldString.dir / lNewString & lOldString.ext))
     for lToMove in lFSItemsToMove:
@@ -253,7 +255,7 @@ task CreateNew, "create a new project from " & "n" & "imTemplate":
     for lDirPath in Dirs(aProjectDir):
       for lFilePath in listFiles(lDirPath):
         let lOldString = lFilePath.readFile
-        let lNewString = lOldString.replace(lString,aNewProjectName)
+        let lNewString = lOldString.replace(lString, aNewProjectName)
         if lNewString != lOldString:
           lFilePath.writeFile(lNewString)
 
@@ -271,7 +273,7 @@ task CreateNew, "create a new project from " & "n" & "imTemplate":
   echo "Cloning [$1] tag [$3] to [$2]"%[gcRepoURL, lNewProjectDir, lTag]
   discard gorgeEx("git clone -b \"$3\" --single-branch $1 $2"%[gcRepoURL, lNewProjectDir, lTag])
   echo "Resetting files and dirs ..."
-  resetProjectDir(lNewProjectDir,lNewProjectName)
+  resetProjectDir(lNewProjectDir, lNewProjectName)
   echo "... done"
 
 
@@ -307,7 +309,7 @@ task CompileAndRunTest, "":
   switch "path", getSourceDir()
   switch "nimcache", gcBuildCacheTestDir
   switch "out", getTestBinaryFilePath(lFilePath)
-  switch "putenv", "$1=\"$2\""%[gcApplicationToTestEnvVarName,getBuildBinaryFile()]
+  switch "putenv", "$1=\"$2\""%[gcApplicationToTestEnvVarName, getBuildBinaryFile()]
   switch "run"
   setCompile(lFilePath)
 
@@ -317,7 +319,7 @@ task Test, "test/s the project":
   for lFilePath in findTestFiles():
     var lCommandToExec = "CompileAndRunTest"
     case hostOS
-    of "linux":
+    of gcLinuxStr:
       if (getTargetOS() == gcWindowsStr):
         lCommandToExec = "CompileAndRunTest_OSLinux_OSWindows"
     selfExecWithDefaults("\"--putenv:$1=$2\" $3"%[lcTestAppFileNameEnvVarName, lFilePath, lCommandToExec])
@@ -393,7 +395,7 @@ task NCompile, "compile using nimble":
 
 task Util_TravisEnvMat, "generate the complete travis-ci env matrix":
   const
-    lEnvs = @[@[gcGCCVersionToUseEnvVarName,"4.8","4.9","5","6","7","8"],@[gcNimBranchToUseEnvVarName,"master","devel"],@[gcTargetOSEnvVarName,"linux",gcWindowsStr],@[gcTargetCpuEnvVarName,"amd64","i386"]]
+    lEnvs = @[@[gcTargetOSEnvVarName, gcLinuxStr, gcWindowsStr], @[gcTargetCpuEnvVarName, gcAmd64, "i386"], @[gcGCCVersionToUseEnvVarName, "4.8", "5", "6", "7", "8"], @[gcNimBranchToUseEnvVarName, "master", "devel"]]
     lEnvsLow = lEnvs.low
     lEnvsHigh = lEnvs.high
   var
@@ -403,10 +405,10 @@ task Util_TravisEnvMat, "generate the complete travis-ci env matrix":
     if aIndex <= lEnvsHigh:
       let lHeader = aResult & " " & lEnvs[aIndex][0] & "="
       for lIndex in 1..lEnvs[aIndex].high:
-        lGetEnvValue( lHeader & lEnvs[aIndex][lIndex], aIndex + 1)
+        lGetEnvValue(lHeader & lEnvs[aIndex][lIndex], aIndex + 1)
     else:
-      lResult &= aResult & "\n"
+      lResult &= "- " & aResult & "\n"
 
-  lGetEnvValue("",lEnvsLow)
+  lGetEnvValue("", lEnvsLow)
   echo lResult
 
