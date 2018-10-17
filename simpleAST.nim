@@ -1,4 +1,3 @@
-
 import strUtils
 import simpleAST/strProcs
 
@@ -16,18 +15,18 @@ type
     FChildren: SimpleASTNodeSeq
 
 
-func newSimpleASTNode* (aName: string = ""): SimpleASTNode {. inline .} =
+func newSimpleASTNode* (aName: string = ""): SimpleASTNode {.inline.} =
   result = SimpleASTNode()
   result.FName = aName
 
 
-func name* (aSimpleASTNode: SimpleASTNode): string {. inline .} =
+func name* (aSimpleASTNode: SimpleASTNode): string {.inline.} =
   result = aSimpleASTNode.FName
 
 
-func value* (aSimpleASTNode: SimpleASTNode): string {. inline .} =
+func value* (aSimpleASTNode: SimpleASTNode): string {.inline.} =
   let lChildren = aSimpleASTNode.FChildren
-  if  (lChildren.len == 0):
+  if (lChildren.len == 0):
     result = aSimpleASTNode.name
   else:
     result = ""
@@ -35,7 +34,7 @@ func value* (aSimpleASTNode: SimpleASTNode): string {. inline .} =
       result &= lChild.value
 
 
-func addChild* (aSimpleASTNode, aChild: SimpleASTNode): bool {. inline .} =
+func addChild* (aSimpleASTNode, aChild: SimpleASTNode): bool {.inline.} =
   result = aChild.FParent.isNil
   if result:
     aChild.FParentIndex = aSimpleASTNode.FChildren.len
@@ -43,19 +42,20 @@ func addChild* (aSimpleASTNode, aChild: SimpleASTNode): bool {. inline .} =
     aChild.FParent = aSimpleASTNode
 
 
-func setValue* (aSimpleASTNode: SimpleASTNode, aValue: string): bool {. inline .} =
-  result = (aSimpleASTNode.FChildren == @[] and aSimpleASTNode.addChild(newSimpleASTNode(aValue)))
+func setValue* (aSimpleASTNode: SimpleASTNode, aValue: string): bool {.inline.} =
+  result = (aSimpleASTNode.FChildren == @[] and aSimpleASTNode.addChild(
+      newSimpleASTNode(aValue)))
 
 
-func parent* (aSimpleASTNode: SimpleASTNode): SimpleASTNodeRef {. inline .} =
+func parent* (aSimpleASTNode: SimpleASTNode): SimpleASTNodeRef {.inline.} =
   result = aSimpleASTNode.FParent
 
 
-func parentIndex* (aSimpleASTNode: SimpleASTNode): Natural {. inline .} =
+func parentIndex* (aSimpleASTNode: SimpleASTNode): Natural {.inline.} =
   result = aSimpleASTNode.FParentIndex
 
 
-func children* (aSimpleASTNode: SimpleASTNode): SimpleASTNodeSeq {. inline .} =
+func children* (aSimpleASTNode: SimpleASTNode): SimpleASTNodeSeq {.inline.} =
   result = aSimpleASTNode.FChildren
 
 
@@ -63,17 +63,25 @@ const
   lcBackSlash = '\\'
   lcOpen = '('
   lcClose = ')'
-  lcEscapeChars : set[char] = {lcOpen, lcClose}
+  lcEscapeChars: set[char] = {lcOpen, lcClose}
 
 
-func asASTStr* (aSimpleASTNode: SimpleASTNode): string {. inline .} =
-  result = aSimpleASTNode.name.strToEscapedStr(lcBackSlash, lcEscapeChars) & lcOpen
-  for lChild in aSimpleASTNode.children:
-    result &= lChild.asASTStr
-  result &= lcClose
+func asASTStr* (aSimpleASTNode: SimpleASTNode): string {.inline.} =
+  result = aSimpleASTNode.name.strToEscapedStr(lcBackSlash, lcEscapeChars)
+  let lContinue = if (not ((aSimpleASTNode.parentIndex > 0) or (
+      aSimpleASTNode.children.len > 0))) and (
+      let lRef = aSimpleASTNode.parent; not lRef.isNil):
+    lRef.children.len > 1
+  else:
+    true
+  if lContinue:
+    result &= lcOpen
+    for lChild in aSimpleASTNode.children:
+      result &= lChild.asASTStr
+    result &= lcClose
 
 
-func asSimpleASTNode* (aASTStr: string): SimpleASTNodeRef {. inline .} =
+func asSimpleASTNode* (aASTStr: string): SimpleASTNodeRef {.inline.} =
   var lIndex = 0
   var lStartIndex = lIndex
   var lASTRootNode: SimpleASTNodeRef
@@ -81,7 +89,8 @@ func asSimpleASTNode* (aASTStr: string): SimpleASTNodeRef {. inline .} =
   while lIndex < lLen:
     case aASTStr[lIndex]
     of lcOpen:
-      let lASTNode = newSimpleASTNode(aASTStr.substr(lStartIndex, lIndex.pred).escapedStrToStr(lcBackSlash))
+      let lASTNode = newSimpleASTNode(aASTStr.substr(lStartIndex,
+          lIndex.pred).escapedStrToStr(lcBackSlash))
       if (not lASTRootNode.isNil):
         let lAddChild = lASTRootNode.addChild(lASTNode)
         assert(lAddChild, "AddChild reurned false adding aNode")
@@ -89,7 +98,11 @@ func asSimpleASTNode* (aASTStr: string): SimpleASTNodeRef {. inline .} =
       lStartIndex = lIndex + 1
     of lcClose:
       if (not lASTRootNode.isNil):
-        let lASTNode : SimpleASTNode = lASTRootNode
+        if (lStartIndex < lIndex.pred):
+          let lAddChild = lASTRootNode.addChild(newSimpleASTNode(
+              aASTStr.substr(lStartIndex, lIndex.pred).escapedStrToStr(lcBackSlash)))
+          assert(lAddChild, "AddChild reurned false adding aNode")
+        let lASTNode: SimpleASTNode = lASTRootNode
         if (not lASTNode.parent.isNil):
           lASTRootNode = lASTNode.parent
           lStartIndex = lIndex + 1
