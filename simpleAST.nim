@@ -68,9 +68,10 @@ const
 
 func asASTStr* (aSimpleASTNode: SimpleASTNode): string {.inline.} =
   result = aSimpleASTNode.name.strToEscapedStr(lcBackSlash, lcEscapeChars)
-  let lContinue = if (not ((aSimpleASTNode.parentIndex > 0) or (
-      aSimpleASTNode.children.len > 0))) and (
-      let lRef = aSimpleASTNode.parent; not lRef.isNil):
+  let lContinue = if (not (("" == result) or 
+                           (aSimpleASTNode.parentIndex > 0) or 
+                           (aSimpleASTNode.children.len > 0))) and 
+                     (let lRef = aSimpleASTNode.parent; not lRef.isNil):
     lRef.children.len > 1
   else:
     true
