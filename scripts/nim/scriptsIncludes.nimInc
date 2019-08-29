@@ -1,31 +1,51 @@
 
-import sets
 import strutils
-import ospaths
+import os
 
 include "scriptsEnvVarNames.nimInc"
 
 
 const
-  gcWindowsStr         = "windows"
-  gcLinuxStr           = "linux"
-  gcAmd64              = "amd64"
+  gcWindowsStr = "windows"
+  gcLinuxStr = "linux"
+  gcAmd64 = "amd64"
 
-  gcNimFileExt         = "nim"
+  gcNimFileExt = "nim"
 
-  gcBuildDirName       = "builds"
-  gcCacheDirName       = "caches"
-  gcTargetDirName      = "targets"
-  gcTestDirName        = "tests"
+  gcBuildDirName = "builds"
+  gcCacheDirName = "caches"
+  gcTargetDirName = "targets"
+  gcTestDirName = "tests"
 
-  gcTestDir            = gcTestDirName
+  gcTestDir = gcTestDirName
 
-  gcBuildDir           = gcBuildDirName
-  gcBuildCacheDir      = gcBuildDir / gcCacheDirName
-  gcBuildCacheTestDir  = gcBuildCacheDir / gcTestDirName
-  gcBuildTargetDir     = gcBuildDir / gcTargetDirName
-  gcBuildTargetTestDir = "$1_$2"%[gcBuildTargetDir, gcTestDirName]
-  gcRepoURL            = "https://github.com/lguzzon-NIM/" & "n" & "imTemplate.git"
+  gcBuildDir = gcBuildDirName
+  gcBuildCacheDir = gcBuildDir / gcCacheDirName
+  gcBuildTargetDir = gcBuildDir / gcTargetDirName
+  gcRepoURL = "https://github.com/lguzzon-NIM/" & "n" & "imTemplate.git"
+
+
+proc getTargetOS (): string =
+  if existsEnv(gcTargetOSEnvVarName):
+    getEnv(gcTargetOSEnvVarName)
+  else:
+    hostOS
+
+
+proc getTargetCPU (): string =
+  if existsEnv(gcTargetCpuEnvVarName):
+    getEnv(gcTargetCpuEnvVarName)
+  else:
+    hostCPU
+
+
+proc gcBuildCacheTestDir (): string =
+  gcBuildCacheDir / gcTestDirName / "$1-$2"%[getTargetOS(), getTargetCPU()]
+
+
+proc gcBuildTargetTestDir (): string =
+  "$1-$2"%[gcBuildTargetDir, gcTestDirName] / "$1-$2"%[getTargetOS(),
+      getTargetCPU()]
 
 
 proc getNameFromDir(aPath: string): string =
@@ -39,55 +59,53 @@ proc getSourceDir(): string =
   result = "."
 
 
-proc getTargetOS (): string =
-  if existsEnv(gcTargetOSEnvVarName): getEnv(gcTargetOSEnvVarName) else: hostOS
-
-
-proc getTargetCPU (): string =
-  if existsEnv(gcTargetCpuEnvVarName): getEnv(gcTargetCpuEnvVarName) else: hostCPU
-
-
 proc getNimVerbosity (): string =
-  if existsEnv(gcNimVerbosityEnvVarName): getEnv(gcNimVerbosityEnvVarName) else: "0"
+  if existsEnv(gcNimVerbosityEnvVarName):
+    getEnv(gcNimVerbosityEnvVarName)
+  else:
+    "0"
 
 
-proc getBinaryFileNameNoExt(): string =
+proc getBinaryFileNameNoExt (): string =
   "$1_$2_$3"%[thisDir().getNameFromDir(), getTargetOS(), getTargetCPU()]
 
 
 proc getBinaryFileExt (): string =
-  if ("js" == getTargetCPU()): 
+  if ("js" == getTargetCPU()):
     # Check it with this command line: nim --putenv:NIM_VERBOSITY="3" --putenv:NIM_TARGET_CPU="js" CTest
     ".js"
   else:
-    if (getTargetOS() == gcWindowsStr): ".exe" else: ""
+    if (getTargetOS() == gcWindowsStr):
+      ".exe"
+    else:
+      ""
 
 
 proc getBinaryFileName (): string =
-  if (getTargetOS() == gcWindowsStr): getBinaryFileNameNoExt() & getBinaryFileExt() else: getBinaryFileNameNoExt()
+  getBinaryFileNameNoExt() & getBinaryFileExt()
 
 
-proc getBuildBinaryFile (): string =
-   gcBuildTargetDir / getBinaryFileName()
+proc getBuildBinaryFilePath (): string =
+  gcBuildTargetDir / getBinaryFileName()
 
 
-proc splitCmdLine(): tuple[options, command, params: string] =
+proc splitCmdLine (): tuple[options, command, params: string] =
   var lIndex = 1
-  let lCount = paramCount()
+  let lCount = system.paramCount()
   var lResult = ""
   while lIndex <= lCount:
-    if paramStr(lIndex)[0] == '-':
-      lResult &= " \"$1\""%[paramStr(lIndex)]
+    if system.paramStr(lIndex)[0] == '-':
+      lResult &= " \"$1\""%[system.paramStr(lIndex)]
       lIndex.inc
     else:
       break
   result.options = lResult.strip()
   if (lIndex <= lCount):
-    result.command = paramStr(lIndex).strip()
+    result.command = system.paramStr(lIndex).strip()
     lIndex.inc
   lResult = ""
   while lIndex <= lCount:
-    lResult &= " "  & paramStr(lIndex)
+    lResult &= " " & system.paramStr(lIndex)
     lIndex.inc
   result.params = lResult.strip()
 
@@ -96,7 +114,8 @@ template selfExecWithDefaults (aCommand: string) =
   var lCmdLine = splitCmdLine()
   if (getNimVerbosity() == "0") and (not lCmdLine.options.contains("--hint")):
     lCmdLine.options &= " --hints:off"
-  let lCommand = lCmdLine.options & " " & aCommand.strip() & " " & lCmdLine.params
+  let lCommand = lCmdLine.options & " " & aCommand.strip() & " " &
+      lCmdLine.params
   if lcIsNimble:
     exec(selfExe().splitFile.dir / "nim " & lCommand.strip)
   else:
@@ -109,8 +128,8 @@ template dependsOn (tasks: untyped) =
 
 
 proc build_create () =
-  for Dir in @[gcBuildCacheDir, gcBuildTargetDir, gcBuildTargetTestDir]:
-    if not dirExists(Dir):
+  for Dir in @[gcBuildCacheDir, gcBuildTargetDir, gcBuildTargetTestDir()]:
+    if not system.dirExists(Dir):
       mkdir Dir
 
 
@@ -133,8 +152,14 @@ proc switchCommon () =
   let lNimVerbosity = getNimVerbosity()
   if splitCmdLine().params == "release":
     switch "define", "release"
+    switch "stackTrace", "off"
+    switch "lineTrace", "off"
+    switch "assertions", "off"
+    switch "checks", "off"
+  else:
+    switch "embedsrc"
   switch "verbosity", lNimVerbosity
-  switch "out", getBuildBinaryFile()
+  switch "out", getBuildBinaryFilePath()
   switch "nimcache", gcBuildCacheDir
   switch "app", "console"
   let lTargetCPU = getTargetCPU()
@@ -156,7 +181,10 @@ proc switchCommon () =
 
 
 proc getTestBinaryFilePath (aSourcePath: string): string =
-  result = "$1_$2_$3$4"%[gcBuildTargetTestDir / splitFile(aSourcePath).name, getTargetOS(), getTargetCPU(), getBinaryFileExt()]
+  result = "$1_$2_$3$4"%[gcBuildTargetTestDir() / splitFile(aSourcePath).name,
+                         getTargetOS(),
+                         getTargetCPU(),
+                         getBinaryFileExt()]
 
 
 const
@@ -165,7 +193,7 @@ const
 
 proc getSourceMainFile (): string =
   let lMainFile = getSourceDir() / thisDir().getNameFromDir() & "." & gcNimFileExt
-  if fileExists(lMainFile):
+  if system.fileExists(lMainFile):
     result = lMainFile
   else:
     let lMessage = "Not found source [$1] in [$2]"%[lMainFile, thisDir()]
@@ -177,10 +205,10 @@ proc getLatestTagOfGitRepo(aRepoUrl: string): string =
   var lMaxTagStr = "0"
   result = ""
   for lString in lExec.output.splitlines:
-    let lTag = lString.rsplit('/',1)
+    let lTag = lString.rsplit('/', 1)
     if lTag.len > 1:
       if not lTag[1].contains('^'):
-        let lNumbers=lTag[1].split('.')
+        let lNumbers = lTag[1].split('.')
         var lNumberStr = ""
         for lIndex in 0..5:
           if lIndex < lNumbers.len:
@@ -192,7 +220,7 @@ proc getLatestTagOfGitRepo(aRepoUrl: string): string =
           result = lTag[1]
 
 
-proc setCompile(aFilePath: string)=
+proc setCompile(aFilePath: string) =
   let lTargetCPU = getTargetCPU()
   var lCommand = "compile"
   case lTargetCPU
@@ -211,7 +239,7 @@ task Tasks, "list all tasks":
 
 
 task Settings, "display alla settings":
-  let lInfos =  """
+  let lInfos = """
   Interpreter : [$1]
   Version     : [$7]
   Source Dir  : [$4]
@@ -220,12 +248,13 @@ task Settings, "display alla settings":
   Target CPU  : [$3]
   Binary File : [$6]
   """
-  echo lInfos%[if lcIsNimble: "Nimble" else: "Nim", getTargetOS(), getTargetCPU(),  getSourceDir(), getSourceMainFile(), getBuildBinaryFile(), NimVersion]
+  echo lInfos%[if lcIsNimble: "Nimble" else: "Nim", getTargetOS(), getTargetCPU(
+    ), getSourceDir(), getSourceMainFile(), getBuildBinaryFilePath(), NimVersion]
 
 
 task CreateNew, "create a new project from " & "n" & "imTemplate":
   #To avoid string replace ... ;)
-  let lString = gcRepoURL.rsplit('/',1)[1].splitFile.name
+  let lString = gcRepoURL.rsplit('/', 1)[1].splitFile.name
 
 
   proc checkProjectName(aProjectName: string, aValidCharSet: set[char]): bool =
@@ -244,12 +273,14 @@ task CreateNew, "create a new project from " & "n" & "imTemplate":
         let lOldString = lFilePath.splitFile
         let lNewString = lOldString.name.replace(lString, aNewProjectName)
         if lNewString != lOldString.name:
-          lFSItemsToMove.add((lFilePath, lOldString.dir / lNewString & lOldString.ext))
+          lFSItemsToMove.add((lFilePath, lOldString.dir / lNewString &
+              lOldString.ext))
     for lDirPath in Dirs(aProjectDir):
       let lOldString = lDirPath.splitFile
       let lNewString = lOldString.name.replace(lString, aNewProjectName)
       if lNewString != lOldString.name:
-        lFSItemsToMove.add((lDirPath, lOldString.dir / lNewString & lOldString.ext))
+        lFSItemsToMove.add((lDirPath, lOldString.dir / lNewString &
+            lOldString.ext))
     for lToMove in lFSItemsToMove:
       lToMove[0].mvFile(lToMove[1])
     for lDirPath in Dirs(aProjectDir):
@@ -262,28 +293,29 @@ task CreateNew, "create a new project from " & "n" & "imTemplate":
   let lNewProjectName = splitCmdLine().params
   let lValidCharSet = {'a' .. 'z', 'A' .. 'Z', '0' .. '9', '_'}
   let lParentDir = thisDir() / ".."
-  if  lNewProjectName == "":
+  if lNewProjectName == "":
     echo "Please provide new project name as param"
     return
-  if  not checkProjectName(lNewProjectName, lValidCharSet):
+  if not checkProjectName(lNewProjectName, lValidCharSet):
     echo "Please provide a project name not containing invalid cahrs $1"%["{'a'..'z', 'A'..'Z', '0'..'9', '_'}"]
     return
   let lNewProjectDir = lParentDir / lNewProjectName
   let lTag = getLatestTagOfGitRepo(gcRepoURL)
   echo "Cloning [$1] tag [$3] to [$2]"%[gcRepoURL, lNewProjectDir, lTag]
-  discard gorgeEx("git clone -b \"$3\" --single-branch $1 $2"%[gcRepoURL, lNewProjectDir, lTag])
+  discard gorgeEx("git clone -b \"$3\" --single-branch $1 $2"%[gcRepoURL,
+      lNewProjectDir, lTag])
   echo "Resetting files and dirs ..."
   resetProjectDir(lNewProjectDir, lNewProjectName)
   echo "... done"
 
 
 task Clean, "clean the project":
-  if dirExists("nimcache"):
+  if system.dirExists("nimcache"):
     "nimcache".rmDir()
   let lFileToRemove = "$1.$2"%[thisDir().getNameFromDir(), ExeExt]
-  if fileExists(lFileToRemove):
+  if system.fileExists(lFileToRemove):
     lFileToRemove.rmFile()
-  if dirExists(gcBuildDir):
+  if system.dirExists(gcBuildDir):
     gcBuildDir.rmDir()
   else:
     echo "Nothing to clean"
@@ -292,7 +324,7 @@ task Clean, "clean the project":
 task CompileTest_OSLinux_OSWindows, "":
   switchCommon()
   switch "path", getSourceDir()
-  switch "nimcache", gcBuildCacheTestDir
+  switch "nimcache", gcBuildCacheTestDir()
   let lFilePath = lcTestAppFileNameEnvVarName.getEnv()
   switch "out", lFilePath.getTestBinaryFilePath()
   setCompile(lFilePath)
@@ -300,16 +332,18 @@ task CompileTest_OSLinux_OSWindows, "":
 
 task CompileAndRunTest_OSLinux_OSWindows, "":
   dependsOn CompileTest_OSLinux_OSWindows
-  exec("$1=\"$2\" wine \"$3\" 2>/dev/null"%[gcApplicationToTestEnvVarName, getBuildBinaryFile(), lcTestAppFileNameEnvVarName.getEnv().getTestBinaryFilePath()])
+  exec("$1=\"$2\" wine \"$3\" 2>/dev/null"%[gcApplicationToTestEnvVarName,
+      getBuildBinaryFilePath(), lcTestAppFileNameEnvVarName.getEnv().getTestBinaryFilePath()])
 
 
 task CompileAndRunTest, "":
   let lFilePath = lcTestAppFileNameEnvVarName.getEnv()
   switchCommon()
   switch "path", getSourceDir()
-  switch "nimcache", gcBuildCacheTestDir
+  switch "nimcache", gcBuildCacheTestDir()
   switch "out", getTestBinaryFilePath(lFilePath)
-  switch "putenv", "$1=\"$2\""%[gcApplicationToTestEnvVarName, getBuildBinaryFile()]
+  switch "putenv", "$1=\"$2\""%[gcApplicationToTestEnvVarName,
+      getBuildBinaryFilePath()]
   switch "run"
   setCompile(lFilePath)
 
@@ -322,7 +356,8 @@ task Test, "test/s the project":
     of gcLinuxStr:
       if (getTargetOS() == gcWindowsStr):
         lCommandToExec = "CompileAndRunTest_OSLinux_OSWindows"
-    selfExecWithDefaults("\"--putenv:$1=$2\" $3"%[lcTestAppFileNameEnvVarName, lFilePath, lCommandToExec])
+    selfExecWithDefaults("\"--putenv:$1=$2\" $3"%[lcTestAppFileNameEnvVarName,
+        lFilePath, lCommandToExec])
 
 
 task CTest, "clean and test/s the project":
@@ -337,14 +372,14 @@ task BuildBinary, "":
 
 
 task Build, "build the project":
-  if not fileExists(getBuildBinaryFile()):
+  if not system.fileExists(getBuildBinaryFilePath()):
     dependsOn BuildBinary
     if ("js" == getTargetCPU()):
       discard
     else:
       if splitCmdLine().params == "release":
-        exec "strip " & getBuildBinaryFile()
-        exec "upx --best " & getBuildBinaryFile()
+        exec "strip " & getBuildBinaryFilePath()
+        exec "upx --best " & getBuildBinaryFilePath()
 
 
 task CBuild, "clean and build the project":
@@ -362,7 +397,11 @@ task CBuildToDeploy, "clean and build the project ready to deploy":
 task Run, "run the project ex: nim --putenv:runParams=\"<Parameters>\" run":
   dependsOn Build
   let params = if existsEnv("runParams"): " " & getEnv("runParams") else: ""
-  let command = (getBuildBinaryFile() & params).strip()
+  let command = ((if ("js" == getTargetCPU()):
+    "node "
+  else:
+    "") &
+    (getBuildBinaryFilePath() & params)).strip()
   command.exec()
 
 
@@ -373,7 +412,8 @@ task CRun, "clean and run the project ex: nim --putenv:runParams=\"<Parameters>\
 task UpdateScript, "update this script to latest release in " & "n" & "imTemplate [uses svn on github]":
   let lFromScript = "scripts/nim/scriptsIncludes.nimInc"
   lFromScript.cpFile(lFromScript & "_OLD")
-  exec("svn export --force \"$1/tags/$2/$3\" \"$3\""%[gcRepoURL, getLatestTagOfGitRepo(gcRepoURL), lFromScript])
+  exec("svn export --force \"$1/tags/$2/$3\" \"$3\""%[gcRepoURL,
+      getLatestTagOfGitRepo(gcRepoURL), lFromScript])
 
 
 task NInstall, "install project using nimble":
@@ -395,7 +435,9 @@ task NCompile, "compile using nimble":
 
 task Util_TravisEnvMat, "generate the complete travis-ci env matrix":
   const
-    lEnvs = @[@[gcTargetOSEnvVarName, gcLinuxStr, gcWindowsStr], @[gcTargetCpuEnvVarName, gcAmd64, "i386"], @[gcGCCVersionToUseEnvVarName, "4.8", "5", "6", "7", "8"], @[gcNimBranchToUseEnvVarName, "master", "devel"]]
+    lEnvs = @[@[gcTargetOSEnvVarName, gcLinuxStr, gcWindowsStr], @[
+        gcTargetCpuEnvVarName, gcAmd64, "i386"], @[gcGCCVersionToUseEnvVarName,
+        "4.8", "5", "6", "7", "8"], @[gcNimBranchToUseEnvVarName, "master", "devel"]]
     lEnvsLow = lEnvs.low
     lEnvsHigh = lEnvs.high
   var
