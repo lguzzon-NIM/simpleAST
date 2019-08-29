@@ -1,4 +1,4 @@
-import strUtils
+
 import simpleAST/strProcs
 
 when NimVersion > "0.18.0":
@@ -15,26 +15,24 @@ type
     FChildren: SimpleASTNodeSeq
 
 
-func newSimpleASTNode* (aName: string = ""): SimpleASTNode {.inline.} =
-  result = SimpleASTNode()
-  result.FName = aName
+template newSimpleASTNode*(aName: string = ""): SimpleASTNode =
+  SimpleASTNode(FName: aName)
 
 
-func name* (aSimpleASTNode: SimpleASTNode): string {.inline.} =
-  result = aSimpleASTNode.FName
+template name*(aSimpleASTNode: SimpleASTNode): string =
+  aSimpleASTNode.FName
 
 
-func value* (aSimpleASTNode: SimpleASTNode): string {.inline.} =
+func value*(aSimpleASTNode: SimpleASTNode): string {.inline.} =
   let lChildren = aSimpleASTNode.FChildren
-  if (lChildren.len == 0):
+  if (0 == lChildren.len):
     result = aSimpleASTNode.name
   else:
-    result = ""
     for lChild in lChildren:
       result &= lChild.value
 
 
-func addChild* (aSimpleASTNode, aChild: SimpleASTNode): bool {.inline.} =
+func addChild*(aSimpleASTNode, aChild: SimpleASTNode): bool {.inline.} =
   result = aChild.FParent.isNil
   if result:
     aChild.FParentIndex = aSimpleASTNode.FChildren.len
@@ -42,21 +40,21 @@ func addChild* (aSimpleASTNode, aChild: SimpleASTNode): bool {.inline.} =
     aChild.FParent = aSimpleASTNode
 
 
-func setValue* (aSimpleASTNode: SimpleASTNode, aValue: string): bool {.inline.} =
-  result = (aSimpleASTNode.FChildren == @[] and aSimpleASTNode.addChild(
+func setValue*(aSimpleASTNode: SimpleASTNode, aValue: string): bool {.inline.} =
+  result = ((0 == aSimpleASTNode.FChildren.len) and aSimpleASTNode.addChild(
       newSimpleASTNode(aValue)))
 
 
-func parent* (aSimpleASTNode: SimpleASTNode): SimpleASTNodeRef {.inline.} =
-  result = aSimpleASTNode.FParent
+template parent*(aSimpleASTNode: SimpleASTNode): SimpleASTNodeRef =
+  aSimpleASTNode.FParent
 
 
-func parentIndex* (aSimpleASTNode: SimpleASTNode): Natural {.inline.} =
-  result = aSimpleASTNode.FParentIndex
+template parentIndex*(aSimpleASTNode: SimpleASTNode): Natural =
+  aSimpleASTNode.FParentIndex
 
 
-func children* (aSimpleASTNode: SimpleASTNode): SimpleASTNodeSeq {.inline.} =
-  result = aSimpleASTNode.FChildren
+template children*(aSimpleASTNode: SimpleASTNode): SimpleASTNodeSeq =
+  aSimpleASTNode.FChildren
 
 
 const
@@ -66,11 +64,11 @@ const
   lcEscapeChars: set[char] = {lcOpen, lcClose}
 
 
-func asASTStr* (aSimpleASTNode: SimpleASTNode): string {.inline.} =
+func asASTStr*(aSimpleASTNode: SimpleASTNode): string {.inline.} =
   result = aSimpleASTNode.name.strToEscapedStr(lcBackSlash, lcEscapeChars)
-  let lContinue = if (not (("" == result) or 
-                           (aSimpleASTNode.parentIndex > 0) or 
-                           (aSimpleASTNode.children.len > 0))) and 
+  let lContinue = if (not (("" == result) or
+                           (aSimpleASTNode.parentIndex > 0) or
+                           (aSimpleASTNode.children.len > 0))) and
                      (let lRef = aSimpleASTNode.parent; not lRef.isNil):
     lRef.children.len > 1
   else:
@@ -82,7 +80,7 @@ func asASTStr* (aSimpleASTNode: SimpleASTNode): string {.inline.} =
     result &= lcClose
 
 
-func asSimpleASTNode* (aASTStr: string): SimpleASTNodeRef {.inline.} =
+func asSimpleASTNode*(aASTStr: string): SimpleASTNodeRef {.inline.} =
   var lIndex = 0
   var lStartIndex = lIndex
   var lASTRootNode: SimpleASTNodeRef
