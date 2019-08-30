@@ -11,5 +11,6 @@ LICENSE text eol=lf
 **/*.redis text eol=lf
 **/*.sh text eol=lf
 **/*.nim text eol=lf
+**/*.nimble text eol=lf
 **/*.nimInc text eol=lf
 **/*.md text eol=lf

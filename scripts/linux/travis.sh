@@ -66,10 +66,12 @@ patchUdev() {
 	[ ! "$(grep -A1 '### END INIT INFO' /etc/init.d/udev | grep 'dpkg --configure -a || exit 0')" ] &&
 		sudo sed -i 's/### END INIT INFO/### END INIT INFO\
 dpkg --configure -a || exit 0/' /etc/init.d/udev
+	return 0
 }
 
 patchUdev
-installIfNotPresent "gcc-${USE_GCC}" "installRepositoryIfNotPresent ubuntu-toolchain-r/test"
+installRepositoryIfNotPresent "ubuntu-toolchain-r/test"
+installIfNotPresent "gcc-${USE_GCC}"
 installIfNotPresent "g++-${USE_GCC}"
 installIfNotPresent "git"
 
@@ -119,6 +121,10 @@ if [ ! -x ${lNimAppPath}/bin/nim ]; then
 	sh build.sh
 	popd
 	rm -rf csources
+	{
+		echo gcc.options.linker = \"-ldl\"
+		echo gcc.cpp.options.linker = \"-ldl\"
+	} >> tools/nimgrep.nim.cfg
 	compile
 	popd
 else
@@ -133,7 +139,7 @@ popd
 rm -f nim.cfg
 if [[ "${NIM_TARGET_OS}" == "windows" ]]; then
 	echo "------------------------------------------------------------ targetOS: ${NIM_TARGET_OS}"
-	export WINEPREFIX=~/.wineNIM
+	export WINEPREFIX="$(pwd)/${lCachedDir}/.wineNIM-${NIM_TARGET_CPU}"
 	${sudoCmd} dpkg --add-architecture i386
 	${aptGetCmd} update
 
