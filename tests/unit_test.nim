@@ -42,3 +42,9 @@ suite "unit-test suite":
       let
         lTestString = lSimpleASTNodeNew.asASTStr
       assert(lTestString == lTestStringRifNew)
+
+  test "newSimpleASTNode":
+    let
+      lSimpleASTNode1 = newSimpleASTNode()
+      lSimpleASTNode2 = newSimpleASTNode(lSimpleASTNode1.name)
+    assert(""==lSimpleASTNode2.name)
