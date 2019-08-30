@@ -20,7 +20,6 @@ const
   gcTestDir = gcTestDirName
 
   gcBuildDir = gcBuildDirName
-  gcBuildCacheDir = gcBuildDir / gcCacheDirName
   gcBuildTargetDir = gcBuildDir / gcTargetDirName
   gcRepoURL = "https://github.com/lguzzon-NIM/" & "n" & "imTemplate.git"
 
@@ -39,13 +38,20 @@ proc getTargetCPU (): string =
     hostCPU
 
 
+template osCpuDirName(): string =
+  "$1-$2"%[getTargetOS(), getTargetCPU()]
+
+
+proc gcBuildCacheDir (): string =
+  gcBuildDir / gcCacheDirName / osCpuDirName()
+
+
 proc gcBuildCacheTestDir (): string =
-  gcBuildCacheDir / gcTestDirName / "$1-$2"%[getTargetOS(), getTargetCPU()]
+  gcBuildCacheDir() / gcTestDirName
 
 
 proc gcBuildTargetTestDir (): string =
-  "$1-$2"%[gcBuildTargetDir, gcTestDirName] / "$1-$2"%[getTargetOS(),
-      getTargetCPU()]
+  "$1-$2"%[gcBuildTargetDir, gcTestDirName] / osCpuDirName()
 
 
 proc getNameFromDir(aPath: string): string =
@@ -128,7 +134,7 @@ template dependsOn (tasks: untyped) =
 
 
 proc build_create () =
-  for Dir in @[gcBuildCacheDir, gcBuildTargetDir, gcBuildTargetTestDir()]:
+  for Dir in @[gcBuildCacheDir(), gcBuildTargetDir, gcBuildTargetTestDir()]:
     if not system.dirExists(Dir):
       mkdir Dir
 
@@ -160,7 +166,7 @@ proc switchCommon () =
     switch "embedsrc"
   switch "verbosity", lNimVerbosity
   switch "out", getBuildBinaryFilePath()
-  switch "nimcache", gcBuildCacheDir
+  switch "nimcache", gcBuildCacheDir()
   switch "app", "console"
   let lTargetCPU = getTargetCPU()
   case lTargetCPU
@@ -453,4 +459,3 @@ task Util_TravisEnvMat, "generate the complete travis-ci env matrix":
 
   lGetEnvValue("", lEnvsLow)
   echo lResult
-

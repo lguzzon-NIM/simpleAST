@@ -18,7 +18,6 @@ type
 template newSimpleASTNode*(aName: string = ""): SimpleASTNode =
   SimpleASTNode(FName: aName)
 
-
 template name*(aSimpleASTNode: SimpleASTNode): string =
   aSimpleASTNode.FName
 
@@ -42,7 +41,7 @@ func addChild*(aSimpleASTNode, aChild: SimpleASTNode): bool {.inline.} =
 
 func setValue*(aSimpleASTNode: SimpleASTNode, aValue: string): bool {.inline.} =
   result = ((0 == aSimpleASTNode.FChildren.len) and aSimpleASTNode.addChild(
-      newSimpleASTNode(aValue)))
+      SimpleASTNode(FName: aValue)))
 
 
 template parent*(aSimpleASTNode: SimpleASTNode): SimpleASTNodeRef =
@@ -88,8 +87,9 @@ func asSimpleASTNode*(aASTStr: string): SimpleASTNodeRef {.inline.} =
   while lIndex < lLen:
     case aASTStr[lIndex]
     of lcOpen:
-      let lASTNode = newSimpleASTNode(aASTStr.substr(lStartIndex,
-          lIndex.pred).escapedStrToStr(lcBackSlash))
+      let lASTNode = SimpleASTNode(
+        FName: aASTStr.substr(lStartIndex,
+                              lIndex.pred).escapedStrToStr(lcBackSlash))
       if (not lASTRootNode.isNil):
         let lAddChild = lASTRootNode.addChild(lASTNode)
         assert(lAddChild, "AddChild reurned false adding aNode")
@@ -98,10 +98,11 @@ func asSimpleASTNode*(aASTStr: string): SimpleASTNodeRef {.inline.} =
     of lcClose:
       if (not lASTRootNode.isNil):
         if (lStartIndex < lIndex.pred):
-          let lAddChild = lASTRootNode.addChild(newSimpleASTNode(
-              aASTStr.substr(lStartIndex, lIndex.pred).escapedStrToStr(lcBackSlash)))
+          let lAddChild = lASTRootNode.addChild(SimpleASTNode(
+            FName: aASTStr.substr(lStartIndex,
+                                  lIndex.pred).escapedStrToStr(lcBackSlash)))
           assert(lAddChild, "AddChild reurned false adding aNode")
-        let lASTNode: SimpleASTNode = lASTRootNode
+        let lASTNode = lASTRootNode
         if (not lASTNode.parent.isNil):
           lASTRootNode = lASTNode.parent
           lStartIndex = lIndex + 1
@@ -116,4 +117,3 @@ func asSimpleASTNode*(aASTStr: string): SimpleASTNodeRef {.inline.} =
     else:
       discard
     lIndex.inc
-
