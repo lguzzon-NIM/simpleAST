@@ -8,7 +8,7 @@ type
   SimpleASTNodeRef* = ref SimpleASTNodeObject
   SimpleASTNode* = SimpleASTNodeRef not nil
   SimpleASTNodeSeq* = seq[SimpleASTNode]
-  SimpleASTNodeObject* = object
+  SimpleASTNodeObject* {.final.} = object
     FName: string
     FParent: SimpleASTNodeRef
     FParentIndex: Natural
