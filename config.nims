@@ -2,4 +2,4 @@
 const
   lcIsNimble = false
 
-include "scripts/nim/scriptsIncludes.nimInc"
+include "scripts/nim/scriptsIncludes.nim"

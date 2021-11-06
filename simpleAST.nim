@@ -18,6 +18,7 @@ type
 template newSimpleASTNode*(aName: string = ""): SimpleASTNode =
   SimpleASTNode(FName: aName)
 
+
 template name*(aSimpleASTNode: SimpleASTNode): string =
   aSimpleASTNode.FName
 
@@ -65,13 +66,10 @@ const
 
 func asASTStr*(aSimpleASTNode: SimpleASTNode): string {.inline.} =
   result = aSimpleASTNode.name.strToEscapedStr(lcBackSlash, lcEscapeChars)
-  let lContinue = if (not (("" == result) or
-                           (aSimpleASTNode.parentIndex > 0) or
-                           (aSimpleASTNode.children.len > 0))) and
-                     (let lRef = aSimpleASTNode.parent; not lRef.isNil):
-    lRef.children.len > 1
-  else:
-    true
+  let lContinue = ("" == result) or
+    (aSimpleASTNode.children.len > 0) or
+    (let lRef = aSimpleASTNode.parent; ((not lRef.isNil) and
+      (lRef.children.len != aSimpleASTNode.parentIndex+1)))
   if lContinue:
     result &= lcOpen
     for lChild in aSimpleASTNode.children:
@@ -102,13 +100,12 @@ func asSimpleASTNode*(aASTStr: string): SimpleASTNodeRef {.inline.} =
             FName: aASTStr.substr(lStartIndex,
                                   lIndex.pred).escapedStrToStr(lcBackSlash)))
           assert(lAddChild, "AddChild reurned false adding aNode")
-        let lASTNode = lASTRootNode
-        if (not lASTNode.parent.isNil):
-          lASTRootNode = lASTNode.parent
-          lStartIndex = lIndex + 1
+        lStartIndex = lIndex + 1
+        if (not lASTRootNode.parent.isNil):
+          lASTRootNode = lASTRootNode.parent
         else:
           if lIndex == lLen.pred:
-            result = lASTNode
+            result = lASTRootNode
           break
       else:
         break
@@ -117,3 +114,7 @@ func asSimpleASTNode*(aASTStr: string): SimpleASTNodeRef {.inline.} =
     else:
       discard
     lIndex.inc
+  if (lStartIndex < lIndex.pred):
+    result = SimpleASTNode(
+            FName: aASTStr.substr(lStartIndex,
+                                  lIndex.pred).escapedStrToStr(lcBackSlash))

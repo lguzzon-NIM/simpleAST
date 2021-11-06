@@ -1,0 +1,20 @@
+image:
+  file: .gitpod.Dockerfile
+# https://www.gitpod.io/docs/config-start-tasks/#start-tasks
+tasks:
+  #  - prebuild: echo "PREBUILD START" && echo "PREBUILD RUN" && echo "PREBUILD STOP"
+  - before: |-
+      echo "BEFORE START" \
+      && ./scripts/linux/installTool.sh -upx_i -shfmt_i -yq_i -zig_i -nim_i \
+      && echo "BEFORE STOP"
+  #  - command: echo "COMMAND START" && echo "COMMAND RUN" && echo "COMMAND STOP"
+  - init: |-
+      echo "INIT START" \
+      && ./scripts/linux/gitConfig.sh \
+      && git stash push \
+      && git flow init -d -f \
+      && ( git stash pop || true ) \
+      && echo "INIT STOP"
+vscode:
+  extensions:
+    - nimsaem.nimvscode

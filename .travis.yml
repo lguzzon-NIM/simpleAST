@@ -1,89 +1,38 @@
-
-os: linux
-dist: trusty
-language: c
-compiler: gcc
-sudo: required
-
+# Check here https://config.travis-ci.com/explore
+# Format here https://jsonformatter.org/yaml-formatter
 branches:
   only:
     - master
     - develop
     - /^release\/.*$/
-
-env:
-  global:
-    - NIM_VERBOSITY=0
-  matrix:
-    - USE_GCC=4.8 NIM_BRANCH=master NIM_TARGET_OS=linux NIM_TARGET_CPU=amd64
-    - USE_GCC=4.8 NIM_BRANCH=master NIM_TARGET_OS=linux NIM_TARGET_CPU=i386
-    - USE_GCC=4.8 NIM_BRANCH=master NIM_TARGET_OS=windows NIM_TARGET_CPU=amd64
-    - USE_GCC=4.8 NIM_BRANCH=master NIM_TARGET_OS=windows NIM_TARGET_CPU=i386
-    - USE_GCC=4.8 NIM_BRANCH=devel NIM_TARGET_OS=linux NIM_TARGET_CPU=amd64
-    - USE_GCC=4.8 NIM_BRANCH=devel NIM_TARGET_OS=linux NIM_TARGET_CPU=i386
-    - USE_GCC=4.8 NIM_BRANCH=devel NIM_TARGET_OS=windows NIM_TARGET_CPU=amd64
-    - USE_GCC=4.8 NIM_BRANCH=devel NIM_TARGET_OS=windows NIM_TARGET_CPU=i386
-    - USE_GCC=4.9 NIM_BRANCH=master NIM_TARGET_OS=linux NIM_TARGET_CPU=amd64
-    - USE_GCC=4.9 NIM_BRANCH=master NIM_TARGET_OS=linux NIM_TARGET_CPU=i386
-    - USE_GCC=4.9 NIM_BRANCH=master NIM_TARGET_OS=windows NIM_TARGET_CPU=amd64
-    - USE_GCC=4.9 NIM_BRANCH=master NIM_TARGET_OS=windows NIM_TARGET_CPU=i386
-    - USE_GCC=4.9 NIM_BRANCH=devel NIM_TARGET_OS=linux NIM_TARGET_CPU=amd64
-    - USE_GCC=4.9 NIM_BRANCH=devel NIM_TARGET_OS=linux NIM_TARGET_CPU=i386
-    - USE_GCC=4.9 NIM_BRANCH=devel NIM_TARGET_OS=windows NIM_TARGET_CPU=amd64
-    - USE_GCC=4.9 NIM_BRANCH=devel NIM_TARGET_OS=windows NIM_TARGET_CPU=i386
-    - USE_GCC=5 NIM_BRANCH=master NIM_TARGET_OS=linux NIM_TARGET_CPU=amd64
-    - USE_GCC=5 NIM_BRANCH=master NIM_TARGET_OS=linux NIM_TARGET_CPU=i386
-    - USE_GCC=5 NIM_BRANCH=master NIM_TARGET_OS=windows NIM_TARGET_CPU=amd64
-    - USE_GCC=5 NIM_BRANCH=master NIM_TARGET_OS=windows NIM_TARGET_CPU=i386
-    - USE_GCC=5 NIM_BRANCH=devel NIM_TARGET_OS=linux NIM_TARGET_CPU=amd64
-    - USE_GCC=5 NIM_BRANCH=devel NIM_TARGET_OS=linux NIM_TARGET_CPU=i386
-    - USE_GCC=5 NIM_BRANCH=devel NIM_TARGET_OS=windows NIM_TARGET_CPU=amd64
-    - USE_GCC=5 NIM_BRANCH=devel NIM_TARGET_OS=windows NIM_TARGET_CPU=i386
-    - USE_GCC=6 NIM_BRANCH=master NIM_TARGET_OS=linux NIM_TARGET_CPU=amd64
-    - USE_GCC=6 NIM_BRANCH=master NIM_TARGET_OS=linux NIM_TARGET_CPU=i386
-    - USE_GCC=6 NIM_BRANCH=master NIM_TARGET_OS=windows NIM_TARGET_CPU=amd64
-    - USE_GCC=6 NIM_BRANCH=master NIM_TARGET_OS=windows NIM_TARGET_CPU=i386
-    - USE_GCC=6 NIM_BRANCH=devel NIM_TARGET_OS=linux NIM_TARGET_CPU=amd64
-    - USE_GCC=6 NIM_BRANCH=devel NIM_TARGET_OS=linux NIM_TARGET_CPU=i386
-    - USE_GCC=6 NIM_BRANCH=devel NIM_TARGET_OS=windows NIM_TARGET_CPU=amd64
-    - USE_GCC=6 NIM_BRANCH=devel NIM_TARGET_OS=windows NIM_TARGET_CPU=i386
-    - USE_GCC=7 NIM_BRANCH=master NIM_TARGET_OS=linux NIM_TARGET_CPU=amd64
-    - USE_GCC=7 NIM_BRANCH=master NIM_TARGET_OS=linux NIM_TARGET_CPU=i386
-    - USE_GCC=7 NIM_BRANCH=master NIM_TARGET_OS=windows NIM_TARGET_CPU=amd64
-    - USE_GCC=7 NIM_BRANCH=master NIM_TARGET_OS=windows NIM_TARGET_CPU=i386
-    - USE_GCC=7 NIM_BRANCH=devel NIM_TARGET_OS=linux NIM_TARGET_CPU=amd64
-    - USE_GCC=7 NIM_BRANCH=devel NIM_TARGET_OS=linux NIM_TARGET_CPU=i386
-    - USE_GCC=7 NIM_BRANCH=devel NIM_TARGET_OS=windows NIM_TARGET_CPU=amd64
-    - USE_GCC=7 NIM_BRANCH=devel NIM_TARGET_OS=windows NIM_TARGET_CPU=i386
-
-matrix:
-  allow_failures:
-    - env:
-        - USE_GCC=4.8 NIM_BRANCH=devel NIM_TARGET_OS=linux NIM_TARGET_CPU=amd64
-        - USE_GCC=4.8 NIM_BRANCH=devel NIM_TARGET_OS=linux NIM_TARGET_CPU=i386
-        - USE_GCC=4.8 NIM_BRANCH=devel NIM_TARGET_OS=windows NIM_TARGET_CPU=amd64
-        - USE_GCC=4.8 NIM_BRANCH=devel NIM_TARGET_OS=windows NIM_TARGET_CPU=i386
-        - USE_GCC=4.9 NIM_BRANCH=devel NIM_TARGET_OS=linux NIM_TARGET_CPU=amd64
-        - USE_GCC=4.9 NIM_BRANCH=devel NIM_TARGET_OS=linux NIM_TARGET_CPU=i386
-        - USE_GCC=4.9 NIM_BRANCH=devel NIM_TARGET_OS=windows NIM_TARGET_CPU=amd64
-        - USE_GCC=4.9 NIM_BRANCH=devel NIM_TARGET_OS=windows NIM_TARGET_CPU=i386
-        - USE_GCC=5 NIM_BRANCH=devel NIM_TARGET_OS=linux NIM_TARGET_CPU=amd64
-        - USE_GCC=5 NIM_BRANCH=devel NIM_TARGET_OS=linux NIM_TARGET_CPU=i386
-        - USE_GCC=5 NIM_BRANCH=devel NIM_TARGET_OS=windows NIM_TARGET_CPU=amd64
-        - USE_GCC=5 NIM_BRANCH=devel NIM_TARGET_OS=windows NIM_TARGET_CPU=i386
-        - USE_GCC=6 NIM_BRANCH=devel NIM_TARGET_OS=linux NIM_TARGET_CPU=amd64
-        - USE_GCC=6 NIM_BRANCH=devel NIM_TARGET_OS=linux NIM_TARGET_CPU=i386
-        - USE_GCC=6 NIM_BRANCH=devel NIM_TARGET_OS=windows NIM_TARGET_CPU=amd64
-        - USE_GCC=6 NIM_BRANCH=devel NIM_TARGET_OS=windows NIM_TARGET_CPU=i386
-        - USE_GCC=7 NIM_BRANCH=devel NIM_TARGET_OS=linux NIM_TARGET_CPU=amd64
-        - USE_GCC=7 NIM_BRANCH=devel NIM_TARGET_OS=linux NIM_TARGET_CPU=i386
-        - USE_GCC=7 NIM_BRANCH=devel NIM_TARGET_OS=windows NIM_TARGET_CPU=amd64
-        - USE_GCC=7 NIM_BRANCH=devel NIM_TARGET_OS=windows NIM_TARGET_CPU=i386
-  fast_finish: true
-
-script:
-  - ./scripts/linux/travis.sh
-
+    - /^hotfix\/.*$/
 cache:
   directories:
-    - toCache
+    - $HOME/.choosenim
+compiler: gcc
+dist: xenial
+env:
+  global:
+    - CACHE_NAME=ChooseNim
+    - NIM_VERBOSITY=0
+  matrix:
+    - NIM_TARGET_OS=linux NIM_TARGET_CPU=amd64 USE_GCC=9 NIM_TAG_SELECTOR=stable NIM_GC=refc
+    - NIM_TARGET_OS=linux NIM_TARGET_CPU=amd64 USE_GCC=9 NIM_TAG_SELECTOR=stable NIM_GC=arc
+    - NIM_TARGET_OS=linux NIM_TARGET_CPU=amd64 USE_GCC=9 NIM_TAG_SELECTOR=devel NIM_GC=refc
+    - NIM_TARGET_OS=linux NIM_TARGET_CPU=amd64 USE_GCC=9 NIM_TAG_SELECTOR=devel NIM_GC=arc
+    - NIM_TARGET_OS=linux NIM_TARGET_CPU=i386 USE_GCC=9 NIM_TAG_SELECTOR=stable NIM_GC=refc
+    - NIM_TARGET_OS=linux NIM_TARGET_CPU=i386 USE_GCC=9 NIM_TAG_SELECTOR=stable NIM_GC=arc
+    - NIM_TARGET_OS=linux NIM_TARGET_CPU=i386 USE_GCC=9 NIM_TAG_SELECTOR=devel NIM_GC=refc
+    - NIM_TARGET_OS=linux NIM_TARGET_CPU=i386 USE_GCC=9 NIM_TAG_SELECTOR=devel NIM_GC=arc
+    - NIM_TARGET_OS=windows NIM_TARGET_CPU=amd64 USE_GCC=9 NIM_TAG_SELECTOR=stable NIM_GC=refc
+    - NIM_TARGET_OS=windows NIM_TARGET_CPU=amd64 USE_GCC=9 NIM_TAG_SELECTOR=stable NIM_GC=arc
+    - NIM_TARGET_OS=windows NIM_TARGET_CPU=amd64 USE_GCC=9 NIM_TAG_SELECTOR=devel NIM_GC=refc
+    - NIM_TARGET_OS=windows NIM_TARGET_CPU=amd64 USE_GCC=9 NIM_TAG_SELECTOR=devel NIM_GC=arc
+    - NIM_TARGET_OS=windows NIM_TARGET_CPU=i386 USE_GCC=9 NIM_TAG_SELECTOR=stable NIM_GC=refc
+    - NIM_TARGET_OS=windows NIM_TARGET_CPU=i386 USE_GCC=9 NIM_TAG_SELECTOR=stable NIM_GC=arc
+    - NIM_TARGET_OS=windows NIM_TARGET_CPU=i386 USE_GCC=9 NIM_TAG_SELECTOR=devel NIM_GC=refc
+    - NIM_TARGET_OS=windows NIM_TARGET_CPU=i386 USE_GCC=9 NIM_TAG_SELECTOR=devel NIM_GC=arc
+language: c
+os: linux
+script:
+  - ./scripts/linux/travis.sh

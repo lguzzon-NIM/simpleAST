@@ -2,7 +2,7 @@
 import setProcs
 
 
-proc strToEscapedStr* (aString: string, aEscapeChar: char, aEscapeCharSet:set[char]): string {. inline .} =
+proc strToEscapedStr*(aString: string, aEscapeChar: char, aEscapeCharSet: set[char]): string {.inline.} =
   result = newStringOfCap((aString.len * 125) div 100)
   let lEscapeCharSet = aEscapeCharSet + {aEscapeChar}
   for lChar in aString:
@@ -11,14 +11,14 @@ proc strToEscapedStr* (aString: string, aEscapeChar: char, aEscapeCharSet:set[ch
     result &= lChar
 
 
-proc strToEscapedStr* (aString, aEscapeChars: string): string {. inline .} =
-  var lEscapeCharSet : set[char] = {}
+proc strToEscapedStr*(aString, aEscapeChars: string): string {.inline.} =
+  var lEscapeCharSet: set[char] = {}
   for lChar in aEscapeChars:
     lEscapeCharSet += lChar
   result = aString.strToEscapedStr(aEscapeChars[0], lEscapeCharSet)
 
 
-proc escapedStrToStr* (aString: string, aEscapeChar: char): string {. inline .} =
+proc escapedStrToStr*(aString: string, aEscapeChar: char): string {.inline.} =
   let lLen = aString.len
   result = newStringOfCap(lLen)
   var lIndex = 0

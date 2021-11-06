@@ -1,0 +1,2 @@
+
+const cHelloWorld* = "Hello world"
