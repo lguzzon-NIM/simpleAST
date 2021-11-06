@@ -1,6 +1,6 @@
 
 # Package
-version = "1.1.6"
+version = "1.2.0"
 author = "Luca Guzzon"
 description = "Simple AST in NIM"
 license = "MIT"
