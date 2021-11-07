@@ -92,7 +92,7 @@ func asSimpleASTNode*(aASTStr: string): SimpleASTNodeRef {.inline.} =
         let lAddChild = lASTRootNode.addChild(lASTNode)
         assert(lAddChild, "AddChild reurned false adding aNode")
       lASTRootNode = lASTNode
-      lStartIndex = lIndex + 1
+      lStartIndex = lIndex.succ
     of lcClose:
       if (not lASTRootNode.isNil):
         if (lStartIndex < lIndex.pred):
@@ -100,7 +100,7 @@ func asSimpleASTNode*(aASTStr: string): SimpleASTNodeRef {.inline.} =
             FName: aASTStr.substr(lStartIndex,
                                   lIndex.pred).escapedStrToStr(lcBackSlash)))
           assert(lAddChild, "AddChild reurned false adding aNode")
-        lStartIndex = lIndex + 1
+        lStartIndex = lIndex.succ
         if (not lASTRootNode.parent.isNil):
           lASTRootNode = lASTRootNode.parent
         else:
