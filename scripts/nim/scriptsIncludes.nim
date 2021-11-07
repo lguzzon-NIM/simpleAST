@@ -293,10 +293,13 @@ zig cc $2"$$@"
       else:
         switch "passL", "-static -no-pie"
   of gcZIG:
-    switch "passL", "-static -no-pie"
-    if (gcWindowsStr == getTargetOS()):
-      switch "clang.options.linker", ""
-      switch "clang.cpp.options.linker", ""
+    if (gcMacOsXStr == getTargetOS()):
+      switch "passL", "-static"
+    else:
+      switch "passL", "-static -no-pie"
+      if (gcWindowsStr == getTargetOS()):
+        switch "clang.options.linker", ""
+        switch "clang.cpp.options.linker", ""
   else:
     discard
 
