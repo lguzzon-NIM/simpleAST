@@ -308,7 +308,7 @@ proc switchCommon () =
   let lNimVerbosity = getNimVerbosity()
   switch "verbosity", lNimVerbosity
   setCC()
-  switch "gc", getGC()
+  switch "mm", getGC()
   if getReleaseOption():
     switch "define", "release"
     switch "define", "quick"
